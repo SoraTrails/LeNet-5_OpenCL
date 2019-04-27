@@ -23,31 +23,48 @@ static const bool tbl[6][16] = {
 #undef X
 
 
+// hot path
 bool CNN::Forward_C1()
 {
 	for (int channel = 0; channel < num_map_C1_CNN; channel++) {
+		//循环不变量外提
+		int addr1 = get_index(0, 0, num_map_input_CNN * channel, width_kernel_conv_CNN, height_kernel_conv_CNN, num_map_C1_CNN * num_map_input_CNN);
+		int addr2 = get_index(0, 0, 0, width_image_input_CNN, height_image_input_CNN, num_map_input_CNN);
+		const float* pw = &weight_C1[0] + addr1;       //卷积核
+		const float* pi = data_single_image + addr2;   //输入图像
+		
 		for (int y = 0; y < height_image_C1_CNN; y++) {
-			for (int x = 0; x < width_image_C1_CNN; x++) {
-				int index = (channel*height_image_C1_CNN*width_image_C1_CNN) + y*width_image_C1_CNN + x;  //当前神经元
-				neuron_C1[index] = 0.0;
+			for (int x = 0; x < width_image_C1_CNN; x+=2) {
+				int index1 = (channel*height_image_C1_CNN*width_image_C1_CNN) + y*width_image_C1_CNN + x;  //当前神经元
+				int index2 = (channel*height_image_C1_CNN*width_image_C1_CNN) + y*width_image_C1_CNN + x+1;  //当前神经元
+
 				//卷积运算
-				for (int inc = 0; inc < num_map_input_CNN; inc++) {
-					int addr1 = get_index(0, 0, num_map_input_CNN * channel + inc, width_kernel_conv_CNN, height_kernel_conv_CNN, num_map_C1_CNN * num_map_input_CNN);
-					int addr2 = get_index(0, 0, inc, width_image_input_CNN, height_image_input_CNN, num_map_input_CNN);
-					const float* pw = &weight_C1[0] + addr1;       //卷积核
-					const float* pi = data_single_image + addr2;   //输入图像
-					float sum = 0.0;
-					const float* ppw = pw;
-					const float* ppi = pi + y * width_image_input_CNN + x;
-					for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
-						for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
-							sum += *ppw++ * ppi[wy * width_image_input_CNN + wx];
-						}
-					}
-					neuron_C1[index] += sum;
+				float sum1 = 0.0;
+				float sum2 = 0.0;
+				const float* ppw1 = pw;
+				const float* ppw2 = pw;
+				const float* ppi1 = pi + y * width_image_input_CNN + x;
+				const float* ppi2 = pi + y * width_image_input_CNN + x+1;
+
+				for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
+					// for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+						sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN];
+						sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN];
+						sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN + 1];
+						sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN + 1];
+						sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN + 2];
+						sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN + 2];
+						sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN + 3];
+						sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN + 3];
+						sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN + 4];
+						sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN + 4];
+					// }
 				}
-				neuron_C1[index] += bias_C1[channel];     //加偏置
-				neuron_C1[index] = activation_function_tanh(neuron_C1[index]);  //激励函数
+
+				neuron_C1[index1] = sum1 + bias_C1[channel];     //加偏置
+				neuron_C1[index1] = activation_function_tanh(neuron_C1[index1]);  //激励函数
+				neuron_C1[index2] = sum2 + bias_C1[channel];     //加偏置
+				neuron_C1[index2] = activation_function_tanh(neuron_C1[index2]);  //激励函数
 			}
 		}
 	}
@@ -83,6 +100,7 @@ bool CNN::Forward_S2()
 	return true;
 }
 
+// hot path
 bool CNN::Forward_C3()
 {
 	for (int channel = 0; channel < num_map_C3_CNN; channel++) {
@@ -101,9 +119,13 @@ bool CNN::Forward_C3()
 					const float* ppw = pw;
 					const float* ppi = pi + y * width_image_S2_CNN + x;
 					for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
-						for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
-							sum += *ppw++ * ppi[wy * width_image_S2_CNN + wx];
-						}
+						// for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+							sum += *ppw++ * ppi[wy * width_image_S2_CNN];
+							sum += *ppw++ * ppi[wy * width_image_S2_CNN + 1];
+							sum += *ppw++ * ppi[wy * width_image_S2_CNN + 2];
+							sum += *ppw++ * ppi[wy * width_image_S2_CNN + 3];
+							sum += *ppw++ * ppi[wy * width_image_S2_CNN + 4];
+						// }
 					}
 					neuron_C3[index] += sum;
 				}
@@ -216,8 +238,4 @@ bool CNN::Forward_output()
 	}
 	return true;
 }
-
-
-
-
 

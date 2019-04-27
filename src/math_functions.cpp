@@ -68,10 +68,12 @@ bool CNN::muladd(const float* src, float c, int len, float* dst)
 	return true;
 }
 
+// unroll by 2
 void CNN::init_variable(float* val, float c, int len)
 {
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < len; i+=2) {
 		val[i] = c;
+		val[i+1] = c;
 	}
 }
 
