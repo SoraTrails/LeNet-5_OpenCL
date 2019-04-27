@@ -32,32 +32,107 @@ bool CNN::train()
 			memcpy(neuron_input, data_single_image, num_neuron_input_CNN*sizeof(float));
 
 			Forward_C1();
-			Forward_S2();
-			Forward_C3();
-			Forward_S4();
-			Forward_C5();
-			Forward_output();
-
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
 				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
-				printf("%dth --> fordward: %1d ms, ", i, t1Duration);
+				printf("%dth --> fordward_C1: %1d ms, ", i, t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+
+			Forward_S2();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("S2: %1d ms, ",t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+			
+			Forward_C3();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("C3: %1d ms, ",t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+			
+			Forward_S4();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("S4: %1d ms, ",t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+			
+			Forward_C5();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("C5: %1d ms, ",t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+			
+			Forward_output();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("output: %1d ms\n", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
 
 			//2 输出误差逆传播
 			Backward_output();
-			Backward_C5();
-			Backward_S4();
-			Backward_C3();
-			Backward_S2();
-			Backward_C1();
-			Backward_input();
-
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
 				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
-				printf("backward: %1d ms, ", t1Duration);
+				printf("%dth --> backward_output: %1d ms, ", i, t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}			
+			
+			Backward_C5();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("C5: %1d ms, ", t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+			
+			Backward_S4();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("S4: %1d ms, ", t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}			
+			
+			Backward_C3();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("C3: %1d ms, ", t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+			
+			Backward_S2();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("S2: %1d ms, ", t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+			
+			Backward_C1();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("C1: %1d ms, ", t1Duration);
+				gettimeofday(&tsBegin, NULL);
+			}
+			
+			Backward_input();
+			if (i % 1000 == 0) {
+				gettimeofday(&tsEnd, NULL);
+				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
+				printf("input: %1d ms \n", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
 
@@ -66,7 +141,7 @@ bool CNN::train()
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
 				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
-				printf(" UpdateWeights: %1d ms\n", t1Duration);
+				printf("%dth --> UpdateWeights: %1d ms\n",i, t1Duration);
 			}
 		}   //3 循环记忆训练
 		//4 学习结果判别
@@ -91,15 +166,11 @@ bool CNN::train()
     return true;
 }
 
-//unroll by 2
 void CNN::update_weights_bias(const float* delta, float* e_weight, float* weight, int len)
 {
-	for (int i = 0; i < len; i+=2) {
+	for (int i = 0; i < len; i++) {
 		e_weight[i] += delta[i] * delta[i];
 		weight[i] -= learning_rate_CNN * delta[i] / (std::sqrt(e_weight[i]) + eps_CNN);
-
-		e_weight[i+1] += delta[i+1] * delta[i+1];
-		weight[i+1] -= learning_rate_CNN * delta[i+1] / (std::sqrt(e_weight[i+1]) + eps_CNN);
 	}
 }
 
