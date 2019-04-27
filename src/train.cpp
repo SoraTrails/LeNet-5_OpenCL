@@ -168,9 +168,11 @@ bool CNN::train()
 
 void CNN::update_weights_bias(const float* delta, float* e_weight, float* weight, int len)
 {
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < len; i+=2) {
 		e_weight[i] += delta[i] * delta[i];
+		e_weight[i+1] += delta[i+1] * delta[i+1];
 		weight[i] -= learning_rate_CNN * delta[i] / (std::sqrt(e_weight[i]) + eps_CNN);
+		weight[i+1] -= learning_rate_CNN * delta[i+1] / (std::sqrt(e_weight[i+1]) + eps_CNN);
 	}
 }
 
