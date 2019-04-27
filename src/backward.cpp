@@ -287,8 +287,8 @@ bool CNN::Backward_input()
 					addr2 +=  y * width_image_input_CNN + x;  //input k
 
 					for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
-						for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
-                            int addr31 = addr1 + wy*width_kernel_conv_CNN + wx;  //卷积核索引 W_kj
+						// for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+                            int addr31 = addr1 + wy*width_kernel_conv_CNN;  //卷积核索引 W_kj
                             int addr32 = addr31 + 1;  //卷积核索引 W_kj
                             int addr33 = addr31 + 2;  //卷积核索引 W_kj
                             int addr34 = addr31 + 3;  //卷积核索引 W_kj
@@ -313,7 +313,7 @@ bool CNN::Backward_input()
                             delta_weight_C1[addr33] += delta_neuron_C1[index] * data_single_image[addr43];
                             delta_weight_C1[addr34] += delta_neuron_C1[index] * data_single_image[addr44];
                             delta_weight_C1[addr35] += delta_neuron_C1[index] * data_single_image[addr45];
-						}
+						// }
 					}
 				}
 				delta_bias_C1[outc] += delta_neuron_C1[index]*25;
