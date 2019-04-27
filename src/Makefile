@@ -10,6 +10,7 @@ all:../Release/OpenCL_CNN ../Release/OpenCL_Predict_CNN
 ../Release/OpenCL_CNN: ${target}
 	g++ -o ../Release/OpenCL_CNN ${target} ${FLAGS}
 ../Release/OpenCL_Predict_CNN: ${target}
+	g++ ${PREDICT_FLAGS} -c -o ${OUTPUT_PATH}/main.o main.cpp 
 	g++ -o ../Release/OpenCL_Predict_CNN ${target} ${PREDICT_FLAGS} 
 
 
