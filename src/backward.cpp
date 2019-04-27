@@ -106,7 +106,7 @@ bool CNN::Backward_S4()
 					__m256 neuron_S4_m256 = _mm256_loadu_ps(neuron_S4 + addr4);
 					__m256 delta_neuron_S4_m256 = _mm256_loadu_ps(delta_neuron_S4 + addr4);
 
-					__m256 tmp1 = _mm256_add_ps(delta_neuron_S4_m256, _mm256_mul_ps(delta_neuron_C5_m256, _mm256_mul_ps(weight_C5_m256, activation_function_tanh_derivative(neuron_S4_m256)));
+					__m256 tmp1 = _mm256_add_ps(delta_neuron_S4_m256, _mm256_mul_ps(delta_neuron_C5_m256, _mm256_mul_ps(weight_C5_m256, activation_function_tanh_derivative(neuron_S4_m256))));
 
 					float delta_neuron_S4_tmp[8];
 					_mm256_storeu_ps(delta_neuron_S4_tmp, tmp1);
@@ -229,7 +229,7 @@ bool CNN::Backward_S2()
 							__m256 neuron_S2_m256 = _mm256_loadu_ps(neuron_S2 + addr4);
 							__m256 delta_neuron_S2_m256 = _mm256_loadu_ps(delta_neuron_S2 + addr4);
 
-							__m256 tmp1 = _mm256_add_ps(delta_neuron_S2_m256, _mm256_mul_ps(delta_neuron_C3_m256, _mm256_mul_ps(weight_C3_m256, activation_function_tanh_derivative(neuron_S2_m256)));
+							__m256 tmp1 = _mm256_add_ps(delta_neuron_S2_m256, _mm256_mul_ps(delta_neuron_C3_m256, _mm256_mul_ps(weight_C3_m256, activation_function_tanh_derivative(neuron_S2_m256))));
 
 							float delta_neuron_S2_tmp[8];
 							_mm256_storeu_ps(delta_neuron_S2_tmp, tmp1);
@@ -352,7 +352,7 @@ bool CNN::Backward_input()
 							__m256 data_single_image_m256 = _mm256_loadu_ps(data_single_image + addr4);
 							__m256 delta_neuron_input_m256 = _mm256_loadu_ps(delta_neuron_input + addr4);
 
-							__m256 tmp1 = _mm256_add_ps(delta_neuron_input_m256, _mm256_mul_ps(delta_neuron_C1_m256, _mm256_mul_ps(weight_C1_m256, activation_function_tanh_derivative(data_single_image_m256)));
+							__m256 tmp1 = _mm256_add_ps(delta_neuron_input_m256, _mm256_mul_ps(delta_neuron_C1_m256, _mm256_mul_ps(weight_C1_m256, activation_function_tanh_derivative(data_single_image_m256))));
 
 							float delta_neuron_input_tmp[8];
 							_mm256_storeu_ps(delta_neuron_input_tmp, tmp1);
