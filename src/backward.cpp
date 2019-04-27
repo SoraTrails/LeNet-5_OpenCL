@@ -120,11 +120,11 @@ bool CNN::Backward_S4()
 					__m256 tmp2 = _mm256_add_ps(delta_weight_C5_m256, _mm256_mul_ps(delta_neuron_C5_m256, neuron_S4_m256));
 					float delta_weight_C5_tmp[8];
 					_mm256_storeu_ps(delta_weight_C5_tmp, tmp2);
-					delta_weight_C5[addr4] = delta_weight_C5_tmp[0];
-					delta_weight_C5[addr4 + 1] = delta_weight_C5_tmp[1];
-					delta_weight_C5[addr4 + 2] = delta_weight_C5_tmp[2];
-					delta_weight_C5[addr4 + 3] = delta_weight_C5_tmp[3];
-					delta_weight_C5[addr4 + 4] = delta_weight_C5_tmp[4];
+					delta_weight_C5[addr3] = delta_weight_C5_tmp[0];
+					delta_weight_C5[addr3 + 1] = delta_weight_C5_tmp[1];
+					delta_weight_C5[addr3 + 2] = delta_weight_C5_tmp[2];
+					delta_weight_C5[addr3 + 3] = delta_weight_C5_tmp[3];
+					delta_weight_C5[addr3 + 4] = delta_weight_C5_tmp[4];
 
 					// int addr31 = addr1 + wy*width_kernel_conv_CNN ;   //卷积核索引 W_kj
 					// int addr32 = addr31 + 1;  //卷积核索引 W_kj
@@ -221,31 +221,59 @@ bool CNN::Backward_S2()
 
 					for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
 						// for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
-                            int addr31 = addr1 + wy*width_kernel_conv_CNN;  //卷积核索引 W_kj
-                            int addr32 = addr31 + 1;  //卷积核索引 W_kj
-                            int addr33 = addr31 + 2;  //卷积核索引 W_kj
-                            int addr34 = addr31 + 3;  //卷积核索引 W_kj
-                            int addr35 = addr31 + 4;  //卷积核索引 W_kj
-                            int addr41 = addr2 + wy*width_image_S2_CNN;     //S2中的像素索引 S2 k
-                            int addr42 = addr41 + 1;     //S2中的像素索引 S2 k
-                            int addr43 = addr41 + 2;     //S2中的像素索引 S2 k
-                            int addr44 = addr41 + 3;     //S2中的像素索引 S2 k
-                            int addr45 = addr41 + 4;     //S2中的像素索引 S2 k
-                            delta_neuron_S2[addr41] += delta_neuron_C3[index] * weight_C3[addr31]
-                                                  * activation_function_tanh_derivative(neuron_S2[addr41]);
-                            delta_neuron_S2[addr42] += delta_neuron_C3[index] * weight_C3[addr32]
-                                                  * activation_function_tanh_derivative(neuron_S2[addr42]);
-                            delta_neuron_S2[addr43] += delta_neuron_C3[index] * weight_C3[addr33]
-                                                  * activation_function_tanh_derivative(neuron_S2[addr43]);
-                            delta_neuron_S2[addr44] += delta_neuron_C3[index] * weight_C3[addr34]
-                                                  * activation_function_tanh_derivative(neuron_S2[addr44]);
-                            delta_neuron_S2[addr45] += delta_neuron_C3[index] * weight_C3[addr35]
-                                                  * activation_function_tanh_derivative(neuron_S2[addr45]);
-                            delta_weight_C3[addr31] += delta_neuron_C3[index] * neuron_S2[addr41];
-                            delta_weight_C3[addr32] += delta_neuron_C3[index] * neuron_S2[addr42];
-                            delta_weight_C3[addr33] += delta_neuron_C3[index] * neuron_S2[addr43];
-                            delta_weight_C3[addr34] += delta_neuron_C3[index] * neuron_S2[addr44];
-                            delta_weight_C3[addr35] += delta_neuron_C3[index] * neuron_S2[addr45];
+							int addr3 = addr1 + wy*width_kernel_conv_CNN;
+							int addr4 = addr2 + wy*width_image_S2_CNN;
+
+							__m256 delta_neuron_C3_m256 = _mm256_broadcast_ss(delta_neuron_C3 + index);
+							__m256 weight_C3_m256 = _mm256_loadu_ps(weight_C3 + addr3);
+							__m256 neuron_S2_m256 = _mm256_loadu_ps(neuron_S2 + addr4);
+							__m256 delta_neuron_S2_m256 = _mm256_loadu_ps(delta_neuron_S2 + addr4);
+
+							__m256 tmp1 = _mm256_add_ps(delta_neuron_S2_m256, _mm256_mul_ps(delta_neuron_C3_m256, _mm256_mul_ps(weight_C3_m256, activation_function_tanh_derivative(neuron_S2_m256)));
+
+							float delta_neuron_S2_tmp[8];
+							_mm256_storeu_ps(delta_neuron_S2_tmp, tmp1);
+							delta_neuron_S2[addr4] = delta_neuron_S2_tmp[0];
+							delta_neuron_S2[addr4 + 1] = delta_neuron_S2_tmp[1];
+							delta_neuron_S2[addr4 + 2] = delta_neuron_S2_tmp[2];
+							delta_neuron_S2[addr4 + 3] = delta_neuron_S2_tmp[3];
+							delta_neuron_S2[addr4 + 4] = delta_neuron_S2_tmp[4];
+
+							__m256 delta_weight_C3_m256 = _mm256_loadu_ps(delta_weight_C3 + addr3);
+							__m256 tmp2 = _mm256_add_ps(delta_weight_C3_m256, _mm256_mul_ps(delta_neuron_C3_m256, neuron_S2_m256));
+							float delta_weight_C3_tmp[8];
+							_mm256_storeu_ps(delta_weight_C3_tmp, tmp2);
+							delta_weight_C3[addr3] = delta_weight_C3_tmp[0];
+							delta_weight_C3[addr3 + 1] = delta_weight_C3_tmp[1];
+							delta_weight_C3[addr3 + 2] = delta_weight_C3_tmp[2];
+							delta_weight_C3[addr3 + 3] = delta_weight_C3_tmp[3];
+							delta_weight_C3[addr3 + 4] = delta_weight_C3_tmp[4];
+
+                            // int addr31 = addr1 + wy*width_kernel_conv_CNN;  //卷积核索引 W_kj
+                            // int addr32 = addr31 + 1;  //卷积核索引 W_kj
+                            // int addr33 = addr31 + 2;  //卷积核索引 W_kj
+                            // int addr34 = addr31 + 3;  //卷积核索引 W_kj
+                            // int addr35 = addr31 + 4;  //卷积核索引 W_kj
+                            // int addr41 = addr2 + wy*width_image_S2_CNN;     //S2中的像素索引 S2 k
+                            // int addr42 = addr41 + 1;     //S2中的像素索引 S2 k
+                            // int addr43 = addr41 + 2;     //S2中的像素索引 S2 k
+                            // int addr44 = addr41 + 3;     //S2中的像素索引 S2 k
+                            // int addr45 = addr41 + 4;     //S2中的像素索引 S2 k
+                            // delta_neuron_S2[addr41] += delta_neuron_C3[index] * weight_C3[addr31]
+                            //                       * activation_function_tanh_derivative(neuron_S2[addr41]);
+                            // delta_neuron_S2[addr42] += delta_neuron_C3[index] * weight_C3[addr32]
+                            //                       * activation_function_tanh_derivative(neuron_S2[addr42]);
+                            // delta_neuron_S2[addr43] += delta_neuron_C3[index] * weight_C3[addr33]
+                            //                       * activation_function_tanh_derivative(neuron_S2[addr43]);
+                            // delta_neuron_S2[addr44] += delta_neuron_C3[index] * weight_C3[addr34]
+                            //                       * activation_function_tanh_derivative(neuron_S2[addr44]);
+                            // delta_neuron_S2[addr45] += delta_neuron_C3[index] * weight_C3[addr35]
+                            //                       * activation_function_tanh_derivative(neuron_S2[addr45]);
+                            // delta_weight_C3[addr31] += delta_neuron_C3[index] * neuron_S2[addr41];
+                            // delta_weight_C3[addr32] += delta_neuron_C3[index] * neuron_S2[addr42];
+                            // delta_weight_C3[addr33] += delta_neuron_C3[index] * neuron_S2[addr43];
+                            // delta_weight_C3[addr34] += delta_neuron_C3[index] * neuron_S2[addr44];
+                            // delta_weight_C3[addr35] += delta_neuron_C3[index] * neuron_S2[addr45];
 						// }
 					}
 					delta_bias_C3[outc] += delta_neuron_C3[index]*25;
@@ -316,31 +344,58 @@ bool CNN::Backward_input()
 
 					for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
 						// for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
-                            int addr31 = addr1 + wy*width_kernel_conv_CNN;  //卷积核索引 W_kj
-                            int addr32 = addr31 + 1;  //卷积核索引 W_kj
-                            int addr33 = addr31 + 2;  //卷积核索引 W_kj
-                            int addr34 = addr31 + 3;  //卷积核索引 W_kj
-                            int addr35 = addr31 + 4;  //卷积核索引 W_kj
-                            int addr41 = addr2 + wy*width_image_input_CNN;     //input中的像素索引 input k
-                            int addr42 = addr41 + 1;     //input中的像素索引 input k
-                            int addr43 = addr41 + 2;     //input中的像素索引 input k
-                            int addr44 = addr41 + 3;     //input中的像素索引 input k
-                            int addr45 = addr41 + 4;     //input中的像素索引 input k
-                            delta_neuron_input[addr41] += delta_neuron_C1[index] * weight_C1[addr31]
-                                                  * activation_function_tanh_derivative(data_single_image[addr41]);
-                            delta_neuron_input[addr42] += delta_neuron_C1[index] * weight_C1[addr32]
-                                                  * activation_function_tanh_derivative(data_single_image[addr42]);
-                            delta_neuron_input[addr43] += delta_neuron_C1[index] * weight_C1[addr33]
-                                                  * activation_function_tanh_derivative(data_single_image[addr43]);
-                            delta_neuron_input[addr44] += delta_neuron_C1[index] * weight_C1[addr34]
-                                                  * activation_function_tanh_derivative(data_single_image[addr44]);
-                            delta_neuron_input[addr45] += delta_neuron_C1[index] * weight_C1[addr35]
-                                                  * activation_function_tanh_derivative(data_single_image[addr45]);
-                            delta_weight_C1[addr31] += delta_neuron_C1[index] * data_single_image[addr41];
-                            delta_weight_C1[addr32] += delta_neuron_C1[index] * data_single_image[addr42];
-                            delta_weight_C1[addr33] += delta_neuron_C1[index] * data_single_image[addr43];
-                            delta_weight_C1[addr34] += delta_neuron_C1[index] * data_single_image[addr44];
-                            delta_weight_C1[addr35] += delta_neuron_C1[index] * data_single_image[addr45];
+							int addr3 = addr1 + wy*width_kernel_conv_CNN;
+							int addr4 = addr2 + wy*width_image_input_CNN;
+
+							__m256 delta_neuron_C1_m256 = _mm256_broadcast_ss(delta_neuron_C1 + index);
+							__m256 weight_C1_m256 = _mm256_loadu_ps(weight_C1 + addr3);
+							__m256 data_single_image_m256 = _mm256_loadu_ps(data_single_image + addr4);
+							__m256 delta_neuron_input_m256 = _mm256_loadu_ps(delta_neuron_input + addr4);
+
+							__m256 tmp1 = _mm256_add_ps(delta_neuron_input_m256, _mm256_mul_ps(delta_neuron_C1_m256, _mm256_mul_ps(weight_C1_m256, activation_function_tanh_derivative(data_single_image_m256)));
+
+							float delta_neuron_input_tmp[8];
+							_mm256_storeu_ps(delta_neuron_input_tmp, tmp1);
+							delta_neuron_input[addr4] = delta_neuron_input_tmp[0];
+							delta_neuron_input[addr4 + 1] = delta_neuron_input_tmp[1];
+							delta_neuron_input[addr4 + 2] = delta_neuron_input_tmp[2];
+							delta_neuron_input[addr4 + 3] = delta_neuron_input_tmp[3];
+							delta_neuron_input[addr4 + 4] = delta_neuron_input_tmp[4];
+
+							__m256 delta_weight_C1_m256 = _mm256_loadu_ps(delta_weight_C1 + addr3);
+							__m256 tmp2 = _mm256_add_ps(delta_weight_C1_m256, _mm256_mul_ps(delta_neuron_C1_m256, data_single_image_m256));
+							float delta_weight_C1_tmp[8];
+							_mm256_storeu_ps(delta_weight_C1_tmp, tmp2);
+							delta_weight_C1[addr3] = delta_weight_C1_tmp[0];
+							delta_weight_C1[addr3 + 1] = delta_weight_C1_tmp[1];
+							delta_weight_C1[addr3 + 2] = delta_weight_C1_tmp[2];
+							delta_weight_C1[addr3 + 3] = delta_weight_C1_tmp[3];
+							delta_weight_C1[addr3 + 4] = delta_weight_C1_tmp[4];
+                            // int addr31 = addr1 + wy*width_kernel_conv_CNN;  //卷积核索引 W_kj
+                            // int addr32 = addr31 + 1;  //卷积核索引 W_kj
+                            // int addr33 = addr31 + 2;  //卷积核索引 W_kj
+                            // int addr34 = addr31 + 3;  //卷积核索引 W_kj
+                            // int addr35 = addr31 + 4;  //卷积核索引 W_kj
+                            // int addr41 = addr2 + wy*width_image_input_CNN;     //input中的像素索引 input k
+                            // int addr42 = addr41 + 1;     //input中的像素索引 input k
+                            // int addr43 = addr41 + 2;     //input中的像素索引 input k
+                            // int addr44 = addr41 + 3;     //input中的像素索引 input k
+                            // int addr45 = addr41 + 4;     //input中的像素索引 input k
+                            // delta_neuron_input[addr41] += delta_neuron_C1[index] * weight_C1[addr31]
+                            //                       * activation_function_tanh_derivative(data_single_image[addr41]);
+                            // delta_neuron_input[addr42] += delta_neuron_C1[index] * weight_C1[addr32]
+                            //                       * activation_function_tanh_derivative(data_single_image[addr42]);
+                            // delta_neuron_input[addr43] += delta_neuron_C1[index] * weight_C1[addr33]
+                            //                       * activation_function_tanh_derivative(data_single_image[addr43]);
+                            // delta_neuron_input[addr44] += delta_neuron_C1[index] * weight_C1[addr34]
+                            //                       * activation_function_tanh_derivative(data_single_image[addr44]);
+                            // delta_neuron_input[addr45] += delta_neuron_C1[index] * weight_C1[addr35]
+                            //                       * activation_function_tanh_derivative(data_single_image[addr45]);
+                            // delta_weight_C1[addr31] += delta_neuron_C1[index] * data_single_image[addr41];
+                            // delta_weight_C1[addr32] += delta_neuron_C1[index] * data_single_image[addr42];
+                            // delta_weight_C1[addr33] += delta_neuron_C1[index] * data_single_image[addr43];
+                            // delta_weight_C1[addr34] += delta_neuron_C1[index] * data_single_image[addr44];
+                            // delta_weight_C1[addr35] += delta_neuron_C1[index] * data_single_image[addr45];
 						// }
 					}
 				}
