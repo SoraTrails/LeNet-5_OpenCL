@@ -7,7 +7,7 @@
 #include "cnn.h"
 
 using namespace std;
-
+const float one[8] = {1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f}; 
 
 float CNN::activation_function_tanh(float x)
 {
@@ -15,6 +15,12 @@ float CNN::activation_function_tanh(float x)
 	float em = std::exp(-x);
 
 	return (ep - em) / (ep + em);
+}
+
+__m256 CNN::activation_function_tanh_derivative(__m256 x)
+{
+	__m256 tmp = _mm256_broadcast_ss(one);
+	return _mm256_sub_ps(tmp, _mm256_mul_ps(x,x));
 }
 
 float CNN::activation_function_tanh_derivative(float x)

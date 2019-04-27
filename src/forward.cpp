@@ -36,7 +36,7 @@ bool CNN::Forward_C1()
 		for (int y = 0; y < height_image_C1_CNN; y++) {
 			for (int x = 0; x < width_image_C1_CNN; x+=2) {
 				int index1 = (channel*height_image_C1_CNN*width_image_C1_CNN) + y*width_image_C1_CNN + x;  //当前神经元
-				int index2 = (channel*height_image_C1_CNN*width_image_C1_CNN) + y*width_image_C1_CNN + x+1;  //当前神经元
+				int index2 = index1+1;  //当前神经元
 
 				//卷积运算
 				float sum1 = 0.0;

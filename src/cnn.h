@@ -22,6 +22,7 @@
 #include <sys/time.h>
 #include <cstring>
 #include <sstream>
+#include <immintrin.h>
 
 // 各层图像大小
 #define width_image_input_CNN		32 //归一化图像宽
