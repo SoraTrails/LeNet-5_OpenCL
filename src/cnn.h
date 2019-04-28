@@ -117,6 +117,7 @@ protected:
 
 	//math_functions
 	float activation_function_tanh(float x); //激活函数:tanh
+	__m128 activation_function_tanh(__m128 x); //激活函数:tanh
 	float activation_function_tanh_derivative(float x); //激活函数tanh的导数
 	__m256 activation_function_tanh_derivative(__m256 x); //激活函数tanh的导数
 	float activation_function_identity(float x);

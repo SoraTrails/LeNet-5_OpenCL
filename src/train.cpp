@@ -168,11 +168,33 @@ bool CNN::train()
 
 void CNN::update_weights_bias(const float* delta, float* e_weight, float* weight, int len)
 {
-	for (int i = 0; i < len; i+=2) {
-		e_weight[i] += delta[i] * delta[i];
-		e_weight[i+1] += delta[i+1] * delta[i+1];
-		weight[i] -= learning_rate_CNN * delta[i] / (std::sqrt(e_weight[i]) + eps_CNN);
-		weight[i+1] -= learning_rate_CNN * delta[i+1] / (std::sqrt(e_weight[i+1]) + eps_CNN);
+	if(len % 8 == 0){
+		const float learning_rate_CNN_const = learning_rate_CNN;
+		const float eps_CNN_const = eps_CNN;
+
+		__m256 learning_rate_CNN_m256 = _mm256_broadcast_ss(&learning_rate_CNN_const);
+		__m256 eps_CNN_const_m256 = _mm256_broadcast_ss(&eps_CNN_const);
+
+		for (int i = 0; i < len; i+=8) {
+			__m256 e_weight_m256 = _mm256_loadu_ps(e_weight + i);
+			__m256 delta_m256 = _mm256_loadu_ps(delta + i);
+			__m256 weight_m256 = _mm256_loadu_ps(weight + i);
+
+			e_weight_m256 = _mm256_add_ps(e_weight_m256, _mm256_mul_ps(delta_m256, delta_m256));
+			
+			weight_m256 = _mm256_sub_ps(weight_m256, 
+						  _mm256_div_ps(_mm256_mul_ps(learning_rate_CNN_m256, delta_m256),
+						  _mm256_add_ps(_mm256_sqrt_ps(e_weight_m256), eps_CNN_const_m256)));
+
+			_mm256_storeu_ps(e_weight + i, e_weight_m256);
+			_mm256_storeu_ps(weight + i, weight_m256);
+		}
+	}
+	else{
+		for (int i = 0; i < len; i++) {
+			e_weight[i] += delta[i] * delta[i];
+			weight[i] -= learning_rate_CNN * delta[i] / (std::sqrt(e_weight[i]) + eps_CNN);
+		}
 	}
 }
 

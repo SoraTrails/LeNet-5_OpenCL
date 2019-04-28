@@ -17,6 +17,13 @@ float CNN::activation_function_tanh(float x)
 	return (ep - em) / (ep + em);
 }
 
+__m128 CNN::activation_function_tanh(__m128 x)
+{ 
+	//amd dont support this instruction
+	// return _mm_tanh_ps(x);
+	return x;
+}
+
 __m256 CNN::activation_function_tanh_derivative(__m256 x)
 {
 	__m256 tmp = _mm256_broadcast_ss(one);
