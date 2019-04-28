@@ -22,6 +22,7 @@ static const bool tbl[6][16] = {
 #undef X
 
 
+
 // hot path
 bool CNN::Forward_C1()
 {
@@ -50,20 +51,20 @@ bool CNN::Forward_C1()
 					_mm_storeu_ps(tmp_res,tmp);
 					sum[0] += *(ppw+4) * ppi[wy * width_image_input_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
 
-					ppi += 1;
-					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN);
+					// ppi += 1;
+					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN + 1);
 					tmp = _mm_mul_ps(ppw_m128,ppi_m128);
 					_mm_storeu_ps(tmp_res,tmp);
 					sum[1] += *(ppw+4) * ppi[wy * width_image_input_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
 
-					ppi += 1;
-					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN);
+					// ppi += 1;
+					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN + 2);
 					tmp = _mm_mul_ps(ppw_m128,ppi_m128);
 					_mm_storeu_ps(tmp_res,tmp);
 					sum[2] += *(ppw+4) * ppi[wy * width_image_input_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
 
-					ppi += 1;
-					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN);
+					// ppi += 1;
+					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN + 3);
 					tmp = _mm_mul_ps(ppw_m128,ppi_m128);
 					_mm_storeu_ps(tmp_res,tmp);
 					sum[3] += *(ppw+4) * ppi[wy * width_image_input_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
@@ -134,6 +135,7 @@ bool CNN::Forward_S2()
 	return true;
 }
 
+
 // hot path
 bool CNN::Forward_C3()
 {
@@ -164,20 +166,20 @@ bool CNN::Forward_C3()
 						_mm_storeu_ps(tmp_res,tmp);
 						sum[0] += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
 
-						ppi += 1;
-						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN);
+						// ppi += 1;
+						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN + 1);
 						tmp = _mm_mul_ps(ppw_m128,ppi_m128);
 						_mm_storeu_ps(tmp_res,tmp);
 						sum[1] += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
 
-						ppi += 1;
-						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN);
+						// ppi += 1;
+						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN + 2);
 						tmp = _mm_mul_ps(ppw_m128,ppi_m128);
 						_mm_storeu_ps(tmp_res,tmp);
 						sum[2] += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
 
-						ppi += 1;
-						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN);
+						// ppi += 1;
+						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN + 3);
 						tmp = _mm_mul_ps(ppw_m128,ppi_m128);
 						_mm_storeu_ps(tmp_res,tmp);
 						sum[3] += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
@@ -205,6 +207,8 @@ bool CNN::Forward_C3()
 	}
 	return true;
 }
+
+
 
 bool CNN::Forward_S4()
 {
