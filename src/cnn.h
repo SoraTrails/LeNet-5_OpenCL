@@ -93,7 +93,7 @@ public:
 	CNN();
 	~CNN();
 
-	void init();
+	void init(char* model=NULL);
 	bool train();
 	int  predict(const unsigned char *data, int width, int height);
 	bool readModelFile(const char *name);

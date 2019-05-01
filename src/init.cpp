@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void CNN::init()
+void CNN::init(char * model)
 {
 	//初始化数据
 	int len1 = width_image_input_CNN * height_image_input_CNN * num_patterns_train_CNN;
@@ -37,9 +37,19 @@ void CNN::init()
 	std::fill(E_weight_output, E_weight_output + len_weight_output_CNN, 0.0);
 	E_bias_output = new float[len_bias_output_CNN];
 	std::fill(E_bias_output, E_bias_output + len_bias_output_CNN, 0.0);
-
-	//初始化Weight
-	initWeightThreshold();
+	if (model != NULL){
+		bool flag = readModelFile(model);
+		if (!flag) {
+			std::cout << "read cnn model error" << std::endl;
+			return;
+		}
+	}
+	else
+	{
+		//初始化Weight
+		initWeightThreshold();
+		saveModelFile("origin.model");
+	}
 	//读取MNIST数据
 	getSrcData();
 }
