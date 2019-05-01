@@ -62,7 +62,10 @@ int main(int argc, char*argv[]) {
 		test_CNN_predict("cnn.model");
 #else
 	CNN Tcnn;
-    Tcnn.init();
+	if(argc == 2)
+	    Tcnn.init(argv[1]);
+	else 
+	    Tcnn.init();
     Tcnn.train();
 #endif
 	cout << "!!!Hello ^_^ ** ^_^ ** ^_^!!!" << endl; // prints !!!Hello World!!!
