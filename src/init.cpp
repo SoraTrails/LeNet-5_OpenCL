@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void CNN::init(char * model=NULL)
+void CNN::init(char * model)
 {
 	//初始化数据
 	int len1 = width_image_input_CNN * height_image_input_CNN * num_patterns_train_CNN;
