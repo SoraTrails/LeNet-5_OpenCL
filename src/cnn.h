@@ -22,6 +22,7 @@
 #include <sys/time.h>
 #include <cstring>
 #include <sstream>
+#include <CL/cl.h>
 
 // 各层图像大小
 #define width_image_input_CNN		32 //归一化图像宽
@@ -98,6 +99,7 @@ public:
 	int  predict(const unsigned char *data, int width, int height);
 	bool readModelFile(const char *name);
 	bool  saveMiddlePic(int index);
+	int init_opencl();
 
 protected:
 	void release();                         //释放申请的空间
@@ -217,6 +219,29 @@ private:
 	float delta_bias_C5[len_bias_C5_CNN];
 	float delta_weight_output[len_weight_output_CNN];
 	float delta_bias_output[len_bias_output_CNN];
+
+	cl_uint num_devs_returned;
+	cl_context_properties properties[3];
+	cl_device_id device_id;
+	cl_int err;
+	cl_int errs[4];
+	cl_platform_id platform_id;
+	cl_uint num_platforms_returned;
+	cl_context context;
+	cl_command_queue command_queue;
+	cl_program program;
+
+	cl_kernel Forward_C1_kernel;
+	cl_kernel Forward_C3_kernel;
+
+	cl_mem Forward_C1_in;
+	cl_mem Forward_C1_out;
+	cl_mem Forward_C1_bias;
+	cl_mem Forward_C1_weight;
+	cl_mem Forward_C3_in;
+	cl_mem Forward_C3_out;
+	cl_mem Forward_C3_bias;
+	cl_mem Forward_C3_weight;
 };
 
 #endif /* CNN_H_ */

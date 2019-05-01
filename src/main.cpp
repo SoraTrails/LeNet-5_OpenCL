@@ -63,6 +63,10 @@ int main(int argc, char*argv[]) {
 #else
 	CNN Tcnn;
     Tcnn.init();
+	if(Tcnn.init_opencl() == -1){
+		cout << "error init opencl" << endl;
+		return 1;
+	}
     Tcnn.train();
 #endif
 	cout << "!!!Hello ^_^ ** ^_^ ** ^_^!!!" << endl; // prints !!!Hello World!!!

@@ -59,6 +59,22 @@ void CNN::release()
 		delete[] E_bias_output;
 		E_bias_output = NULL;
 	}
+
+	
+	clReleaseDevice(device_id);
+	clReleaseMemObject(Forward_C1_in);
+	clReleaseMemObject(Forward_C1_out);
+	clReleaseMemObject(Forward_C1_bias);
+	clReleaseMemObject(Forward_C1_weight);
+	clReleaseMemObject(Forward_C3_in);
+	clReleaseMemObject(Forward_C3_out);
+	clReleaseMemObject(Forward_C3_bias);
+	clReleaseMemObject(Forward_C3_weight);
+	clReleaseProgram(program);
+	clReleaseKernel(Forward_C1_kernel);
+	clReleaseKernel(Forward_C3_kernel);
+	clReleaseCommandQueue(command_queue);
+	clReleaseContext(context);
 }
 
 
