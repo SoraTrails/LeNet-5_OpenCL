@@ -32,76 +32,44 @@ bool CNN::Forward_C1()
 		int addr2 = get_index(0, 0, 0, width_image_input_CNN, height_image_input_CNN, num_map_input_CNN);
 		const float* pw = &weight_C1[0] + addr1;       //卷积核
 		const float* pi = data_single_image + addr2;   //输入图像
-		
+		/*
+		for (int y = 0; y < height_image_C1_CNN; y++) {
+			for (int x = 0; x < width_image_C1_CNN; x++) {
+				int index = (channel*height_image_C1_CNN*width_image_C1_CNN) + y*width_image_C1_CNN + x;  //当前神经元
+				float sum=0;
+				for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
+					for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+						sum += pi[(y+wy)*height_image_C1_CNN+x+wx] * pw[wy*width_kernel_conv_CNN+wx];
+					}
+				}
+				neuron_C1[index] = sum;
+				neuron_C1[index] += bias_C1[channel];     //加偏置
+				neuron_C1[index] = activation_function_tanh(neuron_C1[index]);  //激励函数
+			}
+		}
+		*/
+		__m128 bias = _mm_broadcast_ss(bias_C1 + channel);
 		for (int y = 0; y < height_image_C1_CNN; y++) {
 			for (int x = 0; x < width_image_C1_CNN; x+=4) {
 				int index = (channel*height_image_C1_CNN*width_image_C1_CNN) + y*width_image_C1_CNN + x;  //当前神经元
-				// neuron_C1[index] = 0.0;
-				//卷积运算
-				float sum[4] = {0.0f,0.0f,0.0f,0.0f};
-				const float* ppw = pw;
-				const float* ppi = pi + y * width_image_input_CNN + x;
+				__m128 sum = _mm_setzero_ps();
 
 				for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
-					// for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
-					float tmp_res[4];
-					__m128 ppw_m128 = _mm_loadu_ps(ppw);
-					__m128 ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN);
-					__m128 tmp = _mm_mul_ps(ppw_m128,ppi_m128);
-					_mm_storeu_ps(tmp_res,tmp);
-					sum[0] += *(ppw+4) * ppi[wy * width_image_input_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
-
-					// ppi += 1;
-					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN + 1);
-					tmp = _mm_mul_ps(ppw_m128,ppi_m128);
-					_mm_storeu_ps(tmp_res,tmp);
-					sum[1] += *(ppw+4) * ppi[wy * width_image_input_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
-
-					// ppi += 1;
-					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN + 2);
-					tmp = _mm_mul_ps(ppw_m128,ppi_m128);
-					_mm_storeu_ps(tmp_res,tmp);
-					sum[2] += *(ppw+4) * ppi[wy * width_image_input_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
-
-					// ppi += 1;
-					ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_input_CNN + 3);
-					tmp = _mm_mul_ps(ppw_m128,ppi_m128);
-					_mm_storeu_ps(tmp_res,tmp);
-					sum[3] += *(ppw+4) * ppi[wy * width_image_input_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
-
-					ppw += 5;
-						// sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN];
-						// sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN + 1];
-						// sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN + 2];
-						// sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN + 3];
-						// sum1 += *ppw1++ * ppi1[wy * width_image_input_CNN + 4];
-
-						// sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN];
-						// sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN + 1];
-						// sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN + 2];
-						// sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN + 3];
-						// sum2 += *ppw2++ * ppi2[wy * width_image_input_CNN + 4];
-					// }
+					for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+						__m128 ker = _mm_broadcast_ss(pw + wy*width_kernel_conv_CNN+wx);
+						__m128 image = _mm_loadu_ps(pi+(y+wy)*width_image_input_CNN+x+wx);
+						sum = _mm_add_ps(sum, _mm_mul_ps(ker,image));
+					}
 				}
-				__m128 sum_m128 = _mm_loadu_ps(sum);
-				__m128 bias_C1_m128 = _mm_broadcast_ss(bias_C1 + channel);
-				
-				__m128 tmpp = _mm_add_ps(sum_m128, bias_C1_m128);
-				float tanh_tmp[4];
-				_mm_storeu_ps(tanh_tmp, tmpp);
 
-				neuron_C1[index] = activation_function_tanh(tanh_tmp[0]);
-				neuron_C1[index + 1] = activation_function_tanh(tanh_tmp[1]);
-				neuron_C1[index + 2] = activation_function_tanh(tanh_tmp[2]);
-				neuron_C1[index + 3] = activation_function_tanh(tanh_tmp[3]);
-
-
-				// neuron_C1[index1] = sum1 + bias_C1[channel];     //加偏置
-				// neuron_C1[index1] = activation_function_tanh(neuron_C1[index1]);  //激励函数
-				// neuron_C1[index2] = sum2 + bias_C1[channel];     //加偏置
-				// neuron_C1[index2] = activation_function_tanh(neuron_C1[index2]);  //激励函数
+				_mm_storeu_ps(neuron_C1+index,_mm_add_ps(sum, bias));
+				neuron_C1[index] = activation_function_tanh(neuron_C1[index]);
+				neuron_C1[index+1] = activation_function_tanh(neuron_C1[index+1]);
+				neuron_C1[index+2] = activation_function_tanh(neuron_C1[index+2]);
+				neuron_C1[index+3] = activation_function_tanh(neuron_C1[index+3]);
 			}
 		}
+
 	}
 	return true;
 }
@@ -141,67 +109,35 @@ bool CNN::Forward_C3()
 {
 	for (int channel = 0; channel < num_map_C3_CNN; channel++) {
 		for (int y = 0; y < height_image_C3_CNN; y++) {
-			for (int x = 0; x < width_image_C3_CNN; x+=4) {
+			for (int x = 0; x < width_image_C3_CNN; x++) {
 				int index = (channel*height_image_C3_CNN*width_image_C3_CNN) + y*width_image_C3_CNN + x;  //当前神经元
-				// neuron_C3[index] = 0.0;
+				neuron_C3[index] = 0.0;
 				//卷积运算
-				__m128 neuron_C3_m128 = _mm_setzero_ps();
 				for (int inc = 0; inc < num_map_S2_CNN; inc++) {
 					if (!tbl[inc][channel]) continue;
 					int addr1 = get_index(0, 0, num_map_S2_CNN * channel + inc, width_kernel_conv_CNN, height_kernel_conv_CNN, num_map_C3_CNN * num_map_S2_CNN);
 					int addr2 = get_index(0, 0, inc, width_image_S2_CNN, height_image_S2_CNN, num_map_S2_CNN);  //输入图像
 					const float* pw = &weight_C3[0] + addr1;   //卷积核
 					const float* pi = &neuron_S2[0] + addr2;   //输入图像
-
-					float sum[4] = {0.0f,0.0f,0.0f,0.0f};
+					float sum = 0.0;
 					const float* ppw = pw;
 					const float* ppi = pi + y * width_image_S2_CNN + x;
-
 					for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
 						// for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
-						float tmp_res[4];
-						__m128 ppw_m128 = _mm_loadu_ps(ppw);
-						__m128 ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN);
-						__m128 tmp = _mm_mul_ps(ppw_m128,ppi_m128);
-						_mm_storeu_ps(tmp_res,tmp);
-						sum[0] += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
-
-						// ppi += 1;
-						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN + 1);
-						tmp = _mm_mul_ps(ppw_m128,ppi_m128);
-						_mm_storeu_ps(tmp_res,tmp);
-						sum[1] += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
-
-						// ppi += 1;
-						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN + 2);
-						tmp = _mm_mul_ps(ppw_m128,ppi_m128);
-						_mm_storeu_ps(tmp_res,tmp);
-						sum[2] += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
-
-						// ppi += 1;
-						ppi_m128 = _mm_loadu_ps(ppi + wy * width_image_S2_CNN + 3);
-						tmp = _mm_mul_ps(ppw_m128,ppi_m128);
-						_mm_storeu_ps(tmp_res,tmp);
-						sum[3] += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4] + tmp_res[0] + tmp_res[1] + tmp_res[2] + tmp_res[3];
-
-						ppw += 5;
+							__m128 tmpw = _mm_loadu_ps(ppw);
+							__m128 tmpi = _mm_loadu_ps(ppi+wy * width_image_S2_CNN);
+							float tmp[4];
+							_mm_store_ps(tmp, _mm_mul_ps(tmpw,tmpi));
+							sum += tmp[0] + tmp[1] + tmp[2] + tmp[3];
+							sum += *(ppw+4) * ppi[wy * width_image_S2_CNN + 4];
+							// sum += *ppw++ * ppi[wy * width_image_S2_CNN + wx];
+							ppw += 5;
+						// }
 					}
-					__m128 sum_m128 = _mm_loadu_ps(sum);
-					neuron_C3_m128 = _mm_add_ps(neuron_C3_m128, sum_m128);
+					neuron_C3[index] += sum;
 				}
-				// __m128 sum_m128 = _mm_loadu_ps(sum);
-				__m128 bias_C3_m128 = _mm_broadcast_ss(bias_C3 + channel);
-				
-				__m128 tmpp = _mm_add_ps(neuron_C3_m128, bias_C3_m128);
-				float tanh_tmp[4];
-				_mm_storeu_ps(tanh_tmp, tmpp);
-
-				neuron_C3[index] = activation_function_tanh(tanh_tmp[0]);
-				neuron_C3[index + 1] = activation_function_tanh(tanh_tmp[1]);
-				neuron_C3[index + 2] = activation_function_tanh(tanh_tmp[2]);
-				neuron_C3[index + 3] = activation_function_tanh(tanh_tmp[3]);
-
-				// _mm_storeu_ps(neuron_C3 + index, tmpp);
+				neuron_C3[index] += bias_C3[channel];     //加偏置
+				neuron_C3[index] = activation_function_tanh(neuron_C3[index]);  //激励函数
 			}
 		}
 	}
