@@ -31,7 +31,7 @@ bool CNN::train()
 
 			memcpy(neuron_input, data_single_image, num_neuron_input_CNN*sizeof(float));
 
-			Forward_C1();
+			Forward_C1(i * num_neuron_input_CNN,cl_data_input_train);
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
 				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
@@ -70,7 +70,7 @@ bool CNN::train()
 				printf("C5: %1d ms, ",t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
-			
+
 			Forward_output();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -78,6 +78,22 @@ bool CNN::train()
 				printf("output: %1d ms\n", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
+
+			//////////////
+			for(int i=0;i<FORWARD_NUM+1;i++){
+				errs[i] = clEnqueueReadBuffer(command_queue, *(for_mem[i]), CL_FALSE, 0, for_mem_in_out_len[i]*sizeof(cl_float), for_mem_src[i], 0, NULL, &events[i]);
+			}
+			clWaitForEvents(FORWARD_NUM+1, events);
+
+			// for(int i=0;i<FORWARD_NUM;i++){
+			// 	errs[i] = clEnqueueReadBuffer(command_queue, Forward_bias[i], CL_FALSE, 0, for_mem_bw_len[i][0]*sizeof(cl_float), biases[i], 0, NULL, &events[i]);
+			// }
+			// clWaitForEvents(FORWARD_NUM, events);
+			for(int i=0;i<FORWARD_NUM;i++){
+				errs[i] = clEnqueueReadBuffer(command_queue, Forward_weight[i], CL_FALSE, 0, for_mem_bw_len[i][1]*sizeof(cl_float), weights[i], 0, NULL, &events[i]);
+			}
+			clWaitForEvents(FORWARD_NUM, events);
+			////////////////
 
 			//2 输出误差逆传播
 			Backward_output();
@@ -201,13 +217,14 @@ float CNN::test()
 {
 	int count_accuracy = 0;
 
+
 	for (int num = 0; num < num_patterns_test_CNN; num++) {
 		data_single_image = data_input_test + num * num_neuron_input_CNN;
 		data_single_label = data_output_test + num * num_neuron_output_CNN;
 
-		memcpy(neuron_input, data_single_image, num_neuron_input_CNN*sizeof(float));
+		// memcpy(neuron_input, data_single_image, num_neuron_input_CNN*sizeof(float));
 
-		Forward_C1();
+		Forward_C1(num * num_neuron_input_CNN, cl_data_input_test);
 		Forward_S2();
 		Forward_C3();
 		Forward_S4();
@@ -218,6 +235,8 @@ float CNN::test()
 		int pos_y = -2;
 		float max_value_t = -9999.0;
 		float max_value_y = -9999.0;
+
+		clEnqueueReadBuffer(command_queue, Forward_out_mem, CL_TRUE, 0, num_neuron_output_CNN*sizeof(cl_float), neuron_output, 0, NULL, NULL);
 
 		for (int i = 0; i < num_neuron_output_CNN; i++) {
 			if (neuron_output[i] > max_value_y) {

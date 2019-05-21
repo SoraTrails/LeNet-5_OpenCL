@@ -87,14 +87,30 @@
 #define num_neuron_S4_CNN		 400  //S4层神经元数，5*5*16=400
 #define num_neuron_C5_CNN		 120  //C5层神经元数，1*120=120
 #define num_neuron_output_CNN    10   //输出层神经元数，1*10=10
+// OpenCL 
+#define FORWARD_NUM  6
+#define FORWARD_C1   0
+#define FORWARD_S2   1
+#define FORWARD_C3   2
+#define FORWARD_S4   3
+#define FORWARD_C5   4
+#define FORWARD_OUT  5
 
+#define BACKWRAD_NUM 7
+#define BACKWARD_OUT 0
+#define BACKWARD_C5  1
+#define BACKWARD_S4  2
+#define BACKWARD_C3  3
+#define BACKWARD_S2  4
+#define BACKWARD_C1  5
+#define BACKWARD_IN  6
 //
 class CNN {
 public:
 	CNN();
 	~CNN();
 
-	void init();
+	void init(char* model=NULL);
 	bool train();
 	int  predict(const unsigned char *data, int width, int height);
 	bool readModelFile(const char *name);
@@ -134,7 +150,7 @@ protected:
 	//
 	int get_index(int x, int y, int channel, int width, int height, int depth);
 
-	bool Forward_C1(); //前向传播
+	bool Forward_C1(int index, cl_mem & Forward_in_mem0); //前向传播
 	bool Forward_S2();
 	bool Forward_C3();
 	bool Forward_S4();
@@ -220,28 +236,74 @@ private:
 	float delta_weight_output[len_weight_output_CNN];
 	float delta_bias_output[len_bias_output_CNN];
 
+
+
 	cl_uint num_devs_returned;
 	cl_context_properties properties[3];
 	cl_device_id device_id;
 	cl_int err;
-	cl_int errs[4];
+	cl_int errs[FORWARD_NUM+1];
+	cl_event events[FORWARD_NUM+1];
+	cl_event event_pre;
+	cl_event event_suc;
 	cl_platform_id platform_id;
 	cl_uint num_platforms_returned;
 	cl_context context;
 	cl_command_queue command_queue;
 	cl_program program;
 
-	cl_kernel Forward_C1_kernel;
-	cl_kernel Forward_C3_kernel;
 
-	cl_mem Forward_C1_in;
-	cl_mem Forward_C1_out;
-	cl_mem Forward_C1_bias;
-	cl_mem Forward_C1_weight;
-	cl_mem Forward_C3_in;
-	cl_mem Forward_C3_out;
-	cl_mem Forward_C3_bias;
-	cl_mem Forward_C3_weight;
+	// #define ARG_NUM 	 4
+	// #define ARG_IN 		 0
+	// #define ARG_OUT 	 1
+	// #define ARG_BIAS 	 2
+	// #define ARG_WEIGHT 	 3
+
+	cl_kernel Forward_kernel[FORWARD_NUM];
+	cl_kernel Backward_kernel[BACKWRAD_NUM];
+	cl_kernel Update_weights;
+
+	cl_mem cl_data_input_train;
+	cl_mem cl_label_input_train;
+	cl_mem cl_data_input_test;
+	cl_mem cl_label_input_test;
+
+	cl_mem Forward_in_mem;
+	cl_mem Forward_C1_mem;
+	cl_mem Forward_S2_mem;
+	cl_mem Forward_C3_mem;
+	cl_mem Forward_S4_mem;
+	cl_mem Forward_C5_mem;
+	cl_mem Forward_out_mem;
+	cl_mem Forward_bias[FORWARD_NUM];
+	cl_mem Forward_weight[FORWARD_NUM];
+
+	const int for_mem_bw_len[FORWARD_NUM][2]={
+		{len_bias_C1_CNN,len_weight_C1_CNN},
+		{len_bias_S2_CNN,len_weight_S2_CNN},
+		{len_bias_C3_CNN,len_weight_C3_CNN},
+		{len_bias_S4_CNN,len_weight_S4_CNN},
+		{len_bias_C5_CNN,len_weight_C5_CNN},
+		{len_bias_output_CNN,len_weight_output_CNN}
+	};
+	const int for_mem_in_out_len[FORWARD_NUM+1]={
+		num_neuron_input_CNN,num_neuron_C1_CNN,num_neuron_S2_CNN,
+		num_neuron_C3_CNN,num_neuron_S4_CNN,num_neuron_C5_CNN,num_neuron_output_CNN
+	};
+
+	cl_mem *for_mem[FORWARD_NUM+1] = {&Forward_in_mem,&Forward_C1_mem,&Forward_S2_mem,&Forward_C3_mem,&Forward_S4_mem,&Forward_C5_mem,&Forward_out_mem};
+	std::string kernel_name[FORWARD_NUM]={
+		{"kernel_forward_c1"},
+		{"kernel_forward_s2"},
+		{"kernel_forward_c3"},
+		{"kernel_forward_s4"},
+		{"kernel_forward_c5"},
+		{"kernel_forward_output"}
+	};
+	float *for_mem_src[FORWARD_NUM+1] = {data_single_image,neuron_C1,neuron_S2,neuron_C3,neuron_S4,neuron_C5,neuron_output};
+
+	float *biases[FORWARD_NUM] = {bias_C1, bias_S2, bias_C3, bias_S4, bias_C5, bias_output};
+	float *weights[FORWARD_NUM] = {weight_C1, weight_S2, weight_C3, weight_S4, weight_C5, weight_output};
 };
 
 #endif /* CNN_H_ */

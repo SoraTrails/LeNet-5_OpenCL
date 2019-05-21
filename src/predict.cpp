@@ -27,7 +27,8 @@ int CNN::predict(const unsigned char* data, int width, int height)
 	//std::cout << std::endl;
 
 	data_single_image = &tmp[0];
-	Forward_C1();
+	cl_mem test_img = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR,width_image_input_CNN * height_image_input_CNN*sizeof(float),tmp,&err);
+	Forward_C1(0,test_img);
 	Forward_S2();
 	Forward_C3();
 	Forward_S4();

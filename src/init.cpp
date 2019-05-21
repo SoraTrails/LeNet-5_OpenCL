@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void CNN::init()
+void CNN::init(char * model)
 {
 	//初始化数据
 	int len1 = width_image_input_CNN * height_image_input_CNN * num_patterns_train_CNN;
@@ -37,9 +37,19 @@ void CNN::init()
 	std::fill(E_weight_output, E_weight_output + len_weight_output_CNN, 0.0);
 	E_bias_output = new float[len_bias_output_CNN];
 	std::fill(E_bias_output, E_bias_output + len_bias_output_CNN, 0.0);
-
-	//初始化Weight
-	initWeightThreshold();
+	if (model != NULL){
+		bool flag = readModelFile(model);
+		if (!flag) {
+			std::cout << "read cnn model error" << std::endl;
+			return;
+		}
+	}
+	else
+	{
+		//初始化Weight
+		initWeightThreshold();
+		saveModelFile("origin.model");
+	}	
 	//读取MNIST数据
 	getSrcData();
 }
@@ -125,45 +135,82 @@ int CNN::init_opencl(){
 	}
 	free(kernel_src);
 
-	Forward_C1_in = clCreateBuffer(context, CL_MEM_READ_ONLY, 
-								   num_neuron_input_CNN*sizeof(cl_float), NULL, &errs[0]);
-	Forward_C1_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
-								   num_neuron_C1_CNN*sizeof(cl_float), NULL, &errs[1]);
-	Forward_C1_bias = clCreateBuffer(context, CL_MEM_READ_ONLY, 
-								   len_bias_C1_CNN*sizeof(cl_float), NULL, &errs[2]);
-	Forward_C1_weight = clCreateBuffer(context, CL_MEM_READ_ONLY, 
-								   len_weight_C1_CNN*sizeof(cl_float), NULL, &errs[3]);
-	if(errs[0] != CL_SUCCESS ||errs[1] != CL_SUCCESS ||errs[2] != CL_SUCCESS ||errs[3] != CL_SUCCESS ){
-		cout << "can't create Forward_C1 memory"<< endl;
-		return -1;
+	/////////////////
+	// Buffer Create
+
+	for(int i=0;i<FORWARD_NUM+1;i++){
+		*(for_mem[i]) = clCreateBuffer(context, CL_MEM_READ_WRITE, for_mem_in_out_len[i]*sizeof(cl_float),NULL,&err);
+		if (err != CL_SUCCESS){
+			printf("Unable to create Forward stage in out %d memory. Error Code=%d\n", i, err); 
+			return -1;
+		}
 	}
 
-	Forward_C3_in = clCreateBuffer(context, CL_MEM_READ_ONLY, 
-								   num_neuron_S2_CNN*sizeof(cl_float), NULL, &errs[0]);
-	Forward_C3_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 
-								   num_neuron_C3_CNN*sizeof(cl_float), NULL, &errs[1]);
-	Forward_C3_bias = clCreateBuffer(context, CL_MEM_READ_ONLY, 
-								   len_bias_C3_CNN*sizeof(cl_float), NULL, &errs[2]);
-	Forward_C3_weight = clCreateBuffer(context, CL_MEM_READ_ONLY, 
-								   len_weight_C3_CNN*sizeof(cl_float), NULL, &errs[3]);
-	if(errs[0]!= CL_SUCCESS ||errs[1] != CL_SUCCESS ||errs[2] != CL_SUCCESS ||errs[3] != CL_SUCCESS ){
-		cout << "can't create Forward_C3 memory"<< endl;
-		return -1;
+	for(int i=0;i<FORWARD_NUM;i++){
+		Forward_bias[i] = clCreateBuffer(context, CL_MEM_READ_WRITE,
+												for_mem_bw_len[i][0]*sizeof(cl_float),NULL,&errs[0]);
+		Forward_weight[i] = clCreateBuffer(context, CL_MEM_READ_WRITE,
+												for_mem_bw_len[i][1]*sizeof(cl_float),NULL,&errs[1]);
+		if(errs[0] != CL_SUCCESS ||errs[1] != CL_SUCCESS){
+			cout << "can't create Forward stage bias weight " << i << " memory"<< endl;
+			return -1;
+		}
+		Forward_kernel[i] = clCreateKernel(program, kernel_name[i].c_str(), &err);
+		if (err != CL_SUCCESS){
+			printf("Unable to create kernel object Forward stage %i kernel. Error Code=%d\n", i, err); 
+			return -1;
+		}
 	}
 
-	Forward_C1_kernel = clCreateKernel(program, "kernel_forward_c1", &err);
-	if (err != CL_SUCCESS)
-	{
-		printf("Unable to create kernel object Forward_C1_kernel. Error Code=%d\n", err); 
-		return -1;
+	cl_data_input_train = clCreateBuffer(context, CL_MEM_READ_ONLY,
+								num_neuron_input_CNN*num_patterns_train_CNN*sizeof(cl_float),NULL,&err);
+	cl_label_input_train = clCreateBuffer(context, CL_MEM_READ_ONLY,
+								num_neuron_output_CNN*num_patterns_train_CNN*sizeof(cl_float),NULL,&err);
+	cl_data_input_test = clCreateBuffer(context, CL_MEM_READ_ONLY,
+								num_neuron_input_CNN*num_patterns_test_CNN*sizeof(cl_float),NULL,&err);
+	cl_label_input_test = clCreateBuffer(context, CL_MEM_READ_ONLY,
+								num_neuron_output_CNN*num_patterns_test_CNN*sizeof(cl_float),NULL,&err);
+	// Buffer Create End
+	////////////////////
+
+	////////////////////
+	// Buffer Write
+
+	// for(int i=0;i<FORWARD_NUM;i++){
+	// 	errs[i] = clEnqueueWriteBuffer(command_queue, *(for_mem[i]), CL_FALSE, 0, for_mem_in_out_len[i]*sizeof(cl_float), for_mem_src[i], 0, NULL, &events[i]);
+	// }
+	// clWaitForEvents(FORWARD_NUM+1, events);
+
+	for(int i=0;i<FORWARD_NUM;i++){
+		errs[i] = clEnqueueWriteBuffer(command_queue, Forward_bias[i], CL_FALSE, 0, for_mem_bw_len[i][0]*sizeof(cl_float), biases[i], 0, NULL, &events[i]);
+		if(errs[i] != CL_SUCCESS){
+			cout << "can't write Forward bias buffer " << i << " memory"<< endl;
+		}
 	}
-	Forward_C3_kernel = clCreateKernel(program, "kernel_forward_c3", &err);
-	if (err != CL_SUCCESS)
-	{
-		printf("Unable to create kernel object Forward_C3_kernel. Error Code=%d\n", err); 
-		return -1;
+	clWaitForEvents(FORWARD_NUM, events);
+
+	for(int i=0;i<FORWARD_NUM;i++){
+		errs[i] = clEnqueueWriteBuffer(command_queue, Forward_weight[i], CL_FALSE, 0, for_mem_bw_len[i][1]*sizeof(cl_float), weights[i], 0, NULL, &events[i]);
+		if(errs[i] != CL_SUCCESS){
+			cout << "can't write Forward weight buffer " << i << " memory"<< endl;
+		}
 	}
+	clWaitForEvents(FORWARD_NUM, events);
+
+	errs[0] = clEnqueueWriteBuffer(command_queue, cl_data_input_train, CL_FALSE, 0, num_neuron_input_CNN*num_patterns_train_CNN*sizeof(cl_float), data_input_train, 0, NULL, &events[0]);
+	errs[1] = clEnqueueWriteBuffer(command_queue, cl_label_input_train, CL_FALSE, 0, num_neuron_output_CNN*num_patterns_train_CNN*sizeof(cl_float), data_output_train, 0, NULL, &events[1]);
+	errs[2] = clEnqueueWriteBuffer(command_queue, cl_data_input_test, CL_FALSE, 0, num_neuron_input_CNN*num_patterns_test_CNN*sizeof(cl_float), data_input_test, 0, NULL, &events[2]);
+	errs[3] = clEnqueueWriteBuffer(command_queue, cl_label_input_test, CL_FALSE, 0, num_neuron_output_CNN*num_patterns_test_CNN*sizeof(cl_float), data_output_test, 0, NULL, &events[3]);
+	if(errs[1] != CL_SUCCESS || errs[2] != CL_SUCCESS || errs[3] != CL_SUCCESS || errs[0] != CL_SUCCESS){
+		cout << "can't write input memory"<< endl;
+	}
+	clWaitForEvents(4, events);
+
+	// Buffer Create End
+	//////////////////////
+
 	std::cout << "opencl ready" << std::endl;
+
 	return 0;
 }
 

@@ -23,7 +23,11 @@ int test_CNN_predict(char *model)
 		std::cout << "read cnn model error" << std::endl;
 		return -1;
 	}
-
+	if(cnn2.init_opencl() == -1){
+		cout << "error init opencl" << endl;
+		return 1;
+	}	
+	
 	int width{ 32 }, height{ 32 };
 	std::vector<int> target{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 	std::string image_path{ "images/" };
@@ -62,7 +66,10 @@ int main(int argc, char*argv[]) {
 		test_CNN_predict("cnn.model");
 #else
 	CNN Tcnn;
-    Tcnn.init();
+	if(argc == 2)
+	    Tcnn.init(argv[1]);
+	else 
+	    Tcnn.init();
 	if(Tcnn.init_opencl() == -1){
 		cout << "error init opencl" << endl;
 		return 1;
