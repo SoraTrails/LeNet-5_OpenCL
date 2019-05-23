@@ -212,3 +212,328 @@ __kernel void  kernel_forward_output(__global float *in,
 	out[channel] = tanh((float)(out[channel]));
 
 }
+
+__kernel void  kernel_backward_output(
+	__global float *in, //neuron_output
+	__global float *label, //data_single_label
+	__global float *out, //delta_neuron_output
+	int index //index of label
+)
+{
+	//[10]
+	int channel = get_global_id(0);
+	__global float *labels = label + index;
+
+	out[channel] = 0.0f;
+	const int num_neuron_output_CNN = 10;
+
+	//can use local memory optimization
+	float dE_dy[10];
+	for(int i=0;i<num_neuron_output_CNN;i++){
+		dE_dy[i] = in[i] - labels[i];
+	}
+
+	float dy_da[10];
+	for(int i=0;i<num_neuron_output_CNN;i++){
+		dy_da[i] = 0.0f;
+	}
+	dy_da[channel] = 1.0 - in[channel] * in[channel];
+	float res = 0.0f;
+	for(int i=0;i<num_neuron_output_CNN;i++){
+		res += dy_da[i] * dE_dy[i];
+	}
+	out[channel] = res;
+}
+
+__kernel void  kernel_backward_c5(
+	__global float *in, //delta_neuron_output
+	__global float *neuron_C5, //neuron_C5(in)
+	__global float *weight_output, //weight_output(in) 
+	__global float *delta_weight, // delta_weight_output
+	__global float *delta_bias,	 // delta_bias_output
+	__global float *out //delta_neuron_C5
+)
+{
+	//[120]
+	int channel = get_global_id(0);
+	int num_neuron_output_CNN = 10;
+	out[channel] = 0.0;
+	for (int j = 0; j < num_neuron_output_CNN; j++) {
+		int addr1 = channel * num_neuron_output_CNN + j;    //当前权重
+		out[channel] += in[j] * weight_output[addr1] * (1.0-neuron_C5[channel]*neuron_C5[channel]);
+		delta_weight[addr1] = in[j] * neuron_C5[channel];
+		// delta_bias[j] += in[j];
+	}
+	if(channel < 10){
+		delta_bias[channel] = 120*in[channel];
+	}
+}
+
+__kernel void  kernel_backward_s4(
+	__global float *in, //delta_neuron_C5
+	__global float *neuron_S4, //neuron_S4(in)
+	__global float *weight_C5, //weight_C5(in) 
+	__global float *delta_weight, // delta_weight_C5
+	__global float *delta_bias,	 // delta_bias_C5
+	__global float *out //delta_neuron_S4
+){
+	//[16]
+	int inc = get_global_id(0);
+	const int width_kernel_conv_CNN = 5;
+	const int height_kernel_conv_CNN = 5;
+	const int num_map_S4_CNN = 16;
+	const int height_image_S4_CNN = 5;
+	const int width_image_S4_CNN = 5;
+	const int num_map_C5_CNN = 120;
+
+	for (int outc = 0; outc < num_map_C5_CNN; outc++) {
+		int addr1 = width_kernel_conv_CNN*height_kernel_conv_CNN*(num_map_S4_CNN * outc + inc); //找到对应的卷积核
+		int addr2 = height_image_S4_CNN*width_image_S4_CNN*inc;   //找到对应的S4输入
+
+		for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
+			for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+				int addr3 = addr1 + wy*width_kernel_conv_CNN + wx;  //卷积核索引 W_kj
+				int addr4 = addr2 + wy*width_image_S4_CNN + wx;     //S4中的像素索引 S4 k
+				out[addr4] = in[outc] * weight_C5[addr3] * (1.0 - neuron_S4[addr4] * neuron_S4[addr4]);
+				delta_weight[addr3] = in[outc] * neuron_S4[addr4];
+				// delta_bias[outc] += in[outc];
+			}
+		}
+		// delta_bias[outc] += in[outc] * 25;
+	}
+	// delta_bias[outc] += in[outc] * 25 * 16;
+
+	for(int i=0;i<6;i++){
+		delta_bias[inc*7+i] = in[inc*7+i] * 400;
+	}
+	if(inc < 8){
+		delta_bias[inc + 112] = in[inc + 112] * 400;
+	}
+}
+
+__kernel void  kernel_backward_c3(
+	__global float *in, //delta_neuron_S4
+	__global float *neuron_C3, //neuron_C3(in)
+	__global float *weight_S4, //weight_S4(in) 
+	__global float *delta_weight, // delta_weight_S4
+	__global float *delta_bias,	 // delta_bias_S4
+	__global float *out //delta_neuron_C3
+){
+	//[16]
+	int outc = get_global_id(0);
+	const float scale_factor = 0.25f;
+	const int width_kernel_pooling_CNN = 2;
+	const int height_kernel_pooling_CNN = 2;
+	const int width_image_C3_CNN = 10;
+	const int height_image_C3_CNN = 10;
+	const int width_image_S4_CNN = 5;
+	const int height_image_S4_CNN = 5;
+	int block = width_image_C3_CNN * height_image_C3_CNN * outc; //C3
+	
+	delta_weight[outc] = 0.0f;
+	delta_bias[outc] = 0.0f;
+	for(int i=0;i<width_image_C3_CNN * height_image_C3_CNN;i++){
+		out[outc * 100 + i] = 0.0f;
+	}
+
+	for (int y=0; y<height_image_S4_CNN; y++) {
+		for (int x=0; x<width_image_S4_CNN; x++) {
+			int rows = y * width_kernel_pooling_CNN;
+			int cols = x * height_kernel_pooling_CNN;
+			int index = (outc*height_image_S4_CNN*width_image_S4_CNN) + y*width_image_S4_CNN + x; //S4 当前神经元j
+
+			for (int m = 0; m < height_kernel_pooling_CNN; m++) {
+				for (int n = 0; n < width_kernel_pooling_CNN; n++) {
+					int addr1 = outc;  // 权重
+					int addr2 = block + (rows + m) * width_image_C3_CNN + cols + n; //C3 神经元 k
+					int addr3 = outc;
+					out[addr2] += in[index] * weight_S4[addr1] * (1.0 - neuron_C3[addr2] * neuron_C3[addr2]) * scale_factor;
+					delta_weight[addr1] += in[index] * neuron_C3[addr2] * scale_factor;
+					delta_bias[addr3] += in[index];
+				}
+			}
+		}//index
+	}
+
+}
+
+__kernel void  kernel_backward_s2(
+	__global float *in, //delta_neuron_C3
+	__global float *neuron_S2, //neuron_S2(in)
+	__global float *weight_C3, //weight_C3(in) 
+	__global float *delta_weight, // delta_weight_C3
+	__global float *delta_bias,	 // delta_bias_C3
+	__global float *out //delta_neuron_S2
+){
+	//[6]
+	int inc = get_global_id(0);
+	const int num_map_C3_CNN = 16;
+	const int height_image_C3_CNN = 10;
+	const int width_image_C3_CNN = 10;
+	const int width_kernel_conv_CNN = 5;
+	const int height_kernel_conv_CNN = 5;
+	const int num_map_S2_CNN = 6;
+	const int height_image_S2_CNN = 14;
+	const int width_image_S2_CNN = 14;
+
+	//init
+	for(int i=0;i<196;i++){
+		out[inc * 196 + i] = 0.0f;
+	}
+	for(int i=0;i<400;i++){
+		delta_weight[inc * 400 + i] = 0.0f;
+	}
+	
+	__local float delta_bias_local[6][16];
+
+	for(int i=0;i<num_map_C3_CNN;i++){
+		delta_bias_local[inc][i] = 0.0f;
+	}
+
+	for (int outc = 0; outc < num_map_C3_CNN; outc++) {
+		if (!tbl[inc][outc]) continue;
+
+		for (int y = 0; y < height_image_C3_CNN; y++) {
+			for (int x = 0; x < width_image_C3_CNN; x++) {
+				int index = (outc*height_image_C3_CNN*width_image_C3_CNN) + y*width_image_C3_CNN + x;  //C3 当前神经元 j
+				////////////
+				// inc loop 
+				int addr1 = width_kernel_conv_CNN*height_kernel_conv_CNN*(num_map_S2_CNN * outc + inc); //找到对应的卷积核
+				int addr2 = height_image_S2_CNN*width_image_S2_CNN*inc;   //找到对应的S2输入
+				addr2 += y * width_image_S2_CNN + x;  //S2 k
+				for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
+					for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+						int addr3 = addr1 + wy*width_kernel_conv_CNN + wx;  //卷积核索引 W_kj
+						int addr4 = addr2 + wy*width_image_S2_CNN + wx;     //S2中的像素索引 S2 k
+						int addr5 = outc;
+						out[addr4] += in[index] * weight_C3[addr3] * (1.0 - neuron_S2[addr4] * neuron_S2[addr4]);
+						delta_weight[addr3] += in[index] * neuron_S2[addr4];
+						// delta_bias[addr5] += in[index];
+					}
+				}
+				//TODO bias
+				delta_bias_local[inc][outc] += in[index] * 25;
+				////////////
+			} //index
+		}
+	}
+	barrier(CLK_LOCAL_MEM_FENCE);
+	if(inc < 3){
+		for(int i=0;i<num_map_C3_CNN;i++){
+			delta_bias_local[inc][i] += delta_bias_local[inc+3][i];
+		}
+	}
+	barrier(CLK_LOCAL_MEM_FENCE);
+	if(inc == 0){
+		for(int i=0;i<num_map_C3_CNN;i++){
+			delta_bias[i] = delta_bias_local[inc][i] + delta_bias_local[inc+1][i] + delta_bias_local[inc+2][i];
+		}
+	}
+}
+
+
+__kernel void  kernel_backward_c1(
+	__global float *in, //delta_neuron_S2
+	__global float *neuron_C1, //neuron_C1(in)
+	__global float *weight_S2, //weight_S2(in) 
+	__global float *delta_weight, // delta_weight_S2
+	__global float *delta_bias,	 // delta_bias_S2
+	__global float *out //delta_neuron_C1
+){
+	//[6]
+	int outc = get_global_id(0);
+	const float scale_factor = 0.25f;
+	const int width_kernel_pooling_CNN = 2;
+	const int height_kernel_pooling_CNN = 2;
+	const int width_image_C1_CNN = 28;
+	const int height_image_C1_CNN = 28;
+	const int width_image_S2_CNN = 14;
+	const int height_image_S2_CNN = 14;
+	delta_weight[outc] = 0.0f;
+	delta_bias[outc] = 0.0f;
+	for(int i=0;i<width_image_C1_CNN * height_image_C1_CNN;i++){
+		out[outc * 28 * 28 + i] = 0.0f;
+	}
+	int block = width_image_C1_CNN * height_image_C1_CNN * outc; //C1
+	for (int y=0; y<height_image_S2_CNN; y++) {
+		for (int x=0; x<width_image_S2_CNN; x++) {
+			int rows = y * width_kernel_pooling_CNN;
+			int cols = x * height_kernel_pooling_CNN;
+			int index = (outc*height_image_S2_CNN*width_image_S2_CNN) + y*width_image_S2_CNN + x; //S2 当前神经元j
+
+			for (int m = 0; m < height_kernel_pooling_CNN; m++) {
+				for (int n = 0; n < width_kernel_pooling_CNN; n++) {
+					int addr1 = outc;  // 权重
+					int addr2 = block + (rows + m) * width_image_C1_CNN + cols + n; //C1 神经元 k
+					int addr3 = outc;
+					out[addr2] += in[index] * weight_S2[addr1] * (1.0 - neuron_C1[addr2]*neuron_C1[addr2]) * scale_factor;
+					delta_weight[addr1] += in[index] * neuron_C1[addr2] * scale_factor;
+					delta_bias[addr3] += in[index];
+				}
+			}
+		}//index
+	}
+
+}
+__kernel void  kernel_backward_input(
+	__global float *in, //delta_neuron_C1
+	__global float *neuron_input, //data_single_image(in)
+	__global float *weight_C1, //weight_C1(in) 
+	__global float *delta_weight, // delta_weight_C1
+	__global float *delta_bias,	 // delta_bias_C1
+	__global float *out, //delta_neuron_input
+	int index // index of data_single_image
+){
+	//TODO
+	//[1]
+	// int wx = get_global_id(0);
+	// int wy = get_global_id(1);
+	__global float *data_single_image = neuron_input + index;
+	int width_image_input_CNN = 32;
+	int height_image_input_CNN = 32;
+	int width_image_C1_CNN = 28;
+	int height_image_C1_CNN = 28;
+	int width_kernel_conv_CNN = 5;
+	int height_kernel_conv_CNN = 5;
+	int num_map_C1_CNN = 6;
+	for(int i=0;i<width_image_input_CNN*height_image_input_CNN;i++){
+		out[i] = 0.0f;
+	}
+	for(int i=0;i<150;i++){
+		delta_weight[i] = 0.0f;
+	}
+	for(int i=0;i<6;i++){
+		delta_bias[i] = 0.0f;
+	}
+
+	for (int outc = 0; outc < num_map_C1_CNN; outc++) {
+		for (int y = 0; y < height_image_C1_CNN; y++) {
+			for (int x = 0; x < width_image_C1_CNN; x++) {
+				int index = (outc*height_image_C1_CNN*width_image_C1_CNN) + y*width_image_C1_CNN + x;  //C1 当前神经元 j
+				int addr1 = width_kernel_conv_CNN*height_kernel_conv_CNN*(outc); //找到对应的卷积核
+				int addr2 = y * width_image_input_CNN + x;  //input k
+
+				for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
+					for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+						int addr3 = addr1 + wy*width_kernel_conv_CNN + wx;  //卷积核索引 W_kj
+						int addr4 = addr2 + wy*width_image_input_CNN + wx;     //input中的像素索引 input k
+						int addr5 = outc;
+						out[addr4] += in[index] * weight_C1[addr3] * (1.0 - data_single_image[addr4] * data_single_image[addr4]);
+						delta_weight[addr3] += in[index] * data_single_image[addr4];
+						delta_bias[addr5] += in[index];
+					}
+				}
+			} //index
+		}
+	}
+}
+
+__kernel void kernel_update_weights(
+	__global float * delta,
+	__global float * e_weight,
+	__global float * weight
+){
+	int i = get_global_id(0);
+	e_weight[i] += delta[i] * delta[i];
+	weight[i] -= 0.01 * delta[i] / (sqrt(e_weight[i]) + 1e-8);
+}

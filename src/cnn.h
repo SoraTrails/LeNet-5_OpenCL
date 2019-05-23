@@ -96,7 +96,7 @@
 #define FORWARD_C5   4
 #define FORWARD_OUT  5
 
-#define BACKWRAD_NUM 7
+#define BACKWARD_NUM 7
 #define BACKWARD_OUT 0
 #define BACKWARD_C5  1
 #define BACKWARD_S4  2
@@ -157,13 +157,13 @@ protected:
 	bool Forward_C5();
 	bool Forward_output();
 
-	bool Backward_output();
+	bool Backward_output(int index);
 	bool Backward_C5(); //反向传播
 	bool Backward_S4();
 	bool Backward_C3();
 	bool Backward_S2();
 	bool Backward_C1();
-	bool Backward_input();
+	bool Backward_input(int index);
 
 	bool UpdateWeights(); //更新权值、阈值
 	void update_weights_bias(const float* delta, float* e_weight, float* weight, int len);
@@ -236,8 +236,6 @@ private:
 	float delta_weight_output[len_weight_output_CNN];
 	float delta_bias_output[len_bias_output_CNN];
 
-
-
 	cl_uint num_devs_returned;
 	cl_context_properties properties[3];
 	cl_device_id device_id;
@@ -252,15 +250,8 @@ private:
 	cl_command_queue command_queue;
 	cl_program program;
 
-
-	// #define ARG_NUM 	 4
-	// #define ARG_IN 		 0
-	// #define ARG_OUT 	 1
-	// #define ARG_BIAS 	 2
-	// #define ARG_WEIGHT 	 3
-
 	cl_kernel Forward_kernel[FORWARD_NUM];
-	cl_kernel Backward_kernel[BACKWRAD_NUM];
+	cl_kernel Backward_kernel[BACKWARD_NUM];
 	cl_kernel Update_weights;
 
 	cl_mem cl_data_input_train;
@@ -268,7 +259,8 @@ private:
 	cl_mem cl_data_input_test;
 	cl_mem cl_label_input_test;
 
-	cl_mem Forward_in_mem;
+	//Forward
+	cl_mem Forward_in_mem; // single_data_image
 	cl_mem Forward_C1_mem;
 	cl_mem Forward_S2_mem;
 	cl_mem Forward_C3_mem;
@@ -278,6 +270,22 @@ private:
 	cl_mem Forward_bias[FORWARD_NUM];
 	cl_mem Forward_weight[FORWARD_NUM];
 
+	//Backward
+	cl_mem Backward_bias[BACKWARD_NUM-1]; //delta
+	cl_mem Backward_weight[BACKWARD_NUM-1];
+	
+	cl_mem Backward_out_mem; //neuron delta
+	cl_mem Backward_C5_mem;
+	cl_mem Backward_S4_mem;
+	cl_mem Backward_C3_mem;
+	cl_mem Backward_S2_mem;
+	cl_mem Backward_C1_mem;
+	cl_mem Backward_in_mem;
+
+	//updateweights
+	cl_mem Update_bias[FORWARD_NUM]; // e_delta
+	cl_mem Update_weight[FORWARD_NUM];
+
 	const int for_mem_bw_len[FORWARD_NUM][2]={
 		{len_bias_C1_CNN,len_weight_C1_CNN},
 		{len_bias_S2_CNN,len_weight_S2_CNN},
@@ -286,13 +294,29 @@ private:
 		{len_bias_C5_CNN,len_weight_C5_CNN},
 		{len_bias_output_CNN,len_weight_output_CNN}
 	};
+	const int back_mem_bw_len[BACKWARD_NUM-1][2]={
+		{len_bias_output_CNN,len_weight_output_CNN},
+		{len_bias_C5_CNN,len_weight_C5_CNN},
+		{len_bias_S4_CNN,len_weight_S4_CNN},
+		{len_bias_C3_CNN,len_weight_C3_CNN},
+		{len_bias_S2_CNN,len_weight_S2_CNN},
+		{len_bias_C1_CNN,len_weight_C1_CNN}
+	};
 	const int for_mem_in_out_len[FORWARD_NUM+1]={
 		num_neuron_input_CNN,num_neuron_C1_CNN,num_neuron_S2_CNN,
 		num_neuron_C3_CNN,num_neuron_S4_CNN,num_neuron_C5_CNN,num_neuron_output_CNN
 	};
+	const int back_mem_in_out_len[BACKWARD_NUM]={
+		num_neuron_output_CNN,num_neuron_C5_CNN,num_neuron_S4_CNN,
+		num_neuron_C3_CNN,num_neuron_S2_CNN,num_neuron_C1_CNN,num_neuron_input_CNN
+	};
 
 	cl_mem *for_mem[FORWARD_NUM+1] = {&Forward_in_mem,&Forward_C1_mem,&Forward_S2_mem,&Forward_C3_mem,&Forward_S4_mem,&Forward_C5_mem,&Forward_out_mem};
-	std::string kernel_name[FORWARD_NUM]={
+	float *for_mem_src[FORWARD_NUM+1] = {neuron_input,neuron_C1,neuron_S2,neuron_C3,neuron_S4,neuron_C5,neuron_output};
+	cl_mem *back_mem[BACKWARD_NUM] = {&Backward_out_mem,&Backward_C5_mem,&Backward_S4_mem,&Backward_C3_mem,&Backward_S2_mem,&Backward_C1_mem,&Backward_in_mem};
+	float *back_mem_src[BACKWARD_NUM] = {delta_neuron_output,delta_neuron_C5,delta_neuron_S4,delta_neuron_C3,delta_neuron_S2,delta_neuron_C1,delta_neuron_input};
+
+	std::string forward_kernel_name[FORWARD_NUM]={
 		{"kernel_forward_c1"},
 		{"kernel_forward_s2"},
 		{"kernel_forward_c3"},
@@ -300,7 +324,15 @@ private:
 		{"kernel_forward_c5"},
 		{"kernel_forward_output"}
 	};
-	float *for_mem_src[FORWARD_NUM+1] = {data_single_image,neuron_C1,neuron_S2,neuron_C3,neuron_S4,neuron_C5,neuron_output};
+	std::string backward_kernel_name[BACKWARD_NUM]={
+		{"kernel_backward_output"},
+		{"kernel_backward_c5"},
+		{"kernel_backward_s4"},
+		{"kernel_backward_c3"},
+		{"kernel_backward_s2"},
+		{"kernel_backward_c1"},
+		{"kernel_backward_input"}
+	};
 
 	float *biases[FORWARD_NUM] = {bias_C1, bias_S2, bias_C3, bias_S4, bias_C5, bias_output};
 	float *weights[FORWARD_NUM] = {weight_C1, weight_S2, weight_C3, weight_S4, weight_C5, weight_output};

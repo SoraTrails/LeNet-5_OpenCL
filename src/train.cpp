@@ -31,6 +31,7 @@ bool CNN::train()
 
 			memcpy(neuron_input, data_single_image, num_neuron_input_CNN*sizeof(float));
 
+			// printf("Forward C1 %d:\n",i);
 			Forward_C1(i * num_neuron_input_CNN,cl_data_input_train);
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -80,23 +81,24 @@ bool CNN::train()
 			}
 
 			//////////////
-			for(int i=0;i<FORWARD_NUM+1;i++){
-				errs[i] = clEnqueueReadBuffer(command_queue, *(for_mem[i]), CL_FALSE, 0, for_mem_in_out_len[i]*sizeof(cl_float), for_mem_src[i], 0, NULL, &events[i]);
-			}
-			clWaitForEvents(FORWARD_NUM+1, events);
+			// for(int i=0;i<FORWARD_NUM+1;i++){
+			// 	errs[i] = clEnqueueReadBuffer(command_queue, *(for_mem[i]), CL_FALSE, 0, for_mem_in_out_len[i]*sizeof(cl_float), for_mem_src[i], 0, NULL, &events[i]);
+			// }
+			// clWaitForEvents(FORWARD_NUM+1, events);
 
 			// for(int i=0;i<FORWARD_NUM;i++){
 			// 	errs[i] = clEnqueueReadBuffer(command_queue, Forward_bias[i], CL_FALSE, 0, for_mem_bw_len[i][0]*sizeof(cl_float), biases[i], 0, NULL, &events[i]);
 			// }
 			// clWaitForEvents(FORWARD_NUM, events);
-			for(int i=0;i<FORWARD_NUM;i++){
-				errs[i] = clEnqueueReadBuffer(command_queue, Forward_weight[i], CL_FALSE, 0, for_mem_bw_len[i][1]*sizeof(cl_float), weights[i], 0, NULL, &events[i]);
-			}
-			clWaitForEvents(FORWARD_NUM, events);
+			// for(int i=0;i<FORWARD_NUM;i++){
+			// 	errs[i] = clEnqueueReadBuffer(command_queue, Forward_weight[i], CL_FALSE, 0, for_mem_bw_len[i][1]*sizeof(cl_float), weights[i], 0, NULL, &events[i]);
+			// }
+			// clWaitForEvents(FORWARD_NUM, events);
 			////////////////
 
 			//2 输出误差逆传播
-			Backward_output();
+			// printf("Backward C1 %d:\n",i);
+			Backward_output(i * num_neuron_input_CNN);
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
 				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
@@ -144,7 +146,7 @@ bool CNN::train()
 				gettimeofday(&tsBegin, NULL);
 			}
 			
-			Backward_input();
+			Backward_input(i * num_neuron_input_CNN);
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
 				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
@@ -192,6 +194,7 @@ void CNN::update_weights_bias(const float* delta, float* e_weight, float* weight
 
 bool CNN::UpdateWeights()
 {
+	/*
 	update_weights_bias(delta_weight_C1, E_weight_C1, weight_C1, len_weight_C1_CNN);
 	update_weights_bias(delta_bias_C1, E_bias_C1, bias_C1, len_bias_C1_CNN);
 
@@ -209,7 +212,41 @@ bool CNN::UpdateWeights()
 
 	update_weights_bias(delta_weight_output, E_weight_output, weight_output, len_weight_output_CNN);
 	update_weights_bias(delta_bias_output, E_bias_output, bias_output, len_bias_output_CNN);
+	*/
+	for(int i=0;i<FORWARD_NUM;i++){
+		if (clSetKernelArg(Update_weights, 0, sizeof(cl_mem), &Backward_bias[5-i]) ||
+			clSetKernelArg(Update_weights, 1, sizeof(cl_mem), &Update_bias[i]) ||
+			clSetKernelArg(Update_weights, 2, sizeof(cl_mem), &Forward_bias[i]) != CL_SUCCESS)
+		{
+			printf("Unable to set kernel Update_weights bias %d arguments.\n",i);
+			return false;
+		}
+		size_t global[1] = {for_mem_bw_len[i][0]};
+		err = clEnqueueNDRangeKernel(command_queue, Update_weights, 1, NULL, global, NULL /*local*/, 0, NULL, NULL);
+		if (err != CL_SUCCESS)
+		{
+			printf("Unable to enqueue kernel Update_weights bias %d. Error Code=%d\n",i, err); 
+			return false;
+		}
 
+		if (clSetKernelArg(Update_weights, 0, sizeof(cl_mem), &Backward_weight[5-i]) ||
+			clSetKernelArg(Update_weights, 1, sizeof(cl_mem), &Update_weight[i]) ||
+			clSetKernelArg(Update_weights, 2, sizeof(cl_mem), &Forward_weight[i]) != CL_SUCCESS)
+		{
+			printf("Unable to set kernel Update_weights weight %d arguments.\n",i);
+			return false;
+		}
+
+		size_t global_[1] = {for_mem_bw_len[i][1]};
+
+		err = clEnqueueNDRangeKernel(command_queue, Update_weights, 1, NULL, global_, NULL /*local*/, 0, NULL, NULL);
+		if (err != CL_SUCCESS)
+		{
+			printf("Unable to enqueue kernel Update_weights weight %d. Error Code=%d\n",i, err); 
+			return false;
+		}
+	}
+	clFinish(command_queue);
 	return true;
 }
 

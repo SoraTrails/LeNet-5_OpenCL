@@ -155,9 +155,9 @@ int CNN::init_opencl(){
 			cout << "can't create Forward stage bias weight " << i << " memory"<< endl;
 			return -1;
 		}
-		Forward_kernel[i] = clCreateKernel(program, kernel_name[i].c_str(), &err);
+		Forward_kernel[i] = clCreateKernel(program, forward_kernel_name[i].c_str(), &err);
 		if (err != CL_SUCCESS){
-			printf("Unable to create kernel object Forward stage %i kernel. Error Code=%d\n", i, err); 
+			printf("Unable to create kernel object Forward stage %d kernel. Error Code=%d\n", i, err); 
 			return -1;
 		}
 	}
@@ -170,6 +170,48 @@ int CNN::init_opencl(){
 								num_neuron_input_CNN*num_patterns_test_CNN*sizeof(cl_float),NULL,&err);
 	cl_label_input_test = clCreateBuffer(context, CL_MEM_READ_ONLY,
 								num_neuron_output_CNN*num_patterns_test_CNN*sizeof(cl_float),NULL,&err);
+
+	for(int i=0;i<BACKWARD_NUM;i++){
+		*(back_mem[i]) = clCreateBuffer(context, CL_MEM_READ_WRITE, back_mem_in_out_len[i]*sizeof(cl_float),NULL,&err);
+		if (err != CL_SUCCESS){
+			printf("Unable to create Backward stage in out %d memory. Error Code=%d\n", i, err); 
+			return -1;
+		}
+		Backward_kernel[i] = clCreateKernel(program, backward_kernel_name[i].c_str(), &err);
+		if (err != CL_SUCCESS){
+			printf("Unable to create kernel object Backward stage %d kernel. Error Code=%d\n", i, err); 
+			return -1;
+		}
+	}
+
+
+	for(int i=0;i<BACKWARD_NUM-1;i++){
+		Backward_bias[i] = clCreateBuffer(context, CL_MEM_READ_WRITE,
+												back_mem_bw_len[i][0]*sizeof(cl_float),NULL,&errs[0]);
+		Backward_weight[i] = clCreateBuffer(context, CL_MEM_READ_WRITE,
+												back_mem_bw_len[i][1]*sizeof(cl_float),NULL,&errs[1]);
+		if(errs[0] != CL_SUCCESS ||errs[1] != CL_SUCCESS){
+			cout << "can't create Backward stage bias weight " << i << " memory"<< endl;
+			return -1;
+		}
+
+	}
+	Update_weights = clCreateKernel(program, "kernel_update_weights", &err);
+	if (err != CL_SUCCESS){
+		printf("Unable to create kernel object Update_weights kernel. Error Code=%d\n", err); 
+		return -1;
+	}
+
+	for(int i=0;i<FORWARD_NUM;i++){
+		Update_bias[i] = clCreateBuffer(context, CL_MEM_READ_WRITE,
+												for_mem_bw_len[i][0]*sizeof(cl_float),NULL,&errs[0]);
+		Update_weight[i] = clCreateBuffer(context, CL_MEM_READ_WRITE,
+												for_mem_bw_len[i][1]*sizeof(cl_float),NULL,&errs[1]);
+		if(errs[0] != CL_SUCCESS ||errs[1] != CL_SUCCESS){
+			cout << "can't create Update stage e_bias e_weight " << i << " memory"<< endl;
+			return -1;
+		}
+	}
 	// Buffer Create End
 	////////////////////
 
@@ -208,7 +250,7 @@ int CNN::init_opencl(){
 
 	// Buffer Create End
 	//////////////////////
-
+	clFinish(command_queue);
 	std::cout << "opencl ready" << std::endl;
 
 	return 0;
