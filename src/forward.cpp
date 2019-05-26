@@ -167,7 +167,6 @@ bool CNN::Forward_C3()
 			}
 		}
 	}
-	return true;
 	#ifdef DEBUG
 	const int len = 10;
 	// float tmp[len];
@@ -181,6 +180,7 @@ bool CNN::Forward_C3()
 	}
 	printf("\n");
 	#endif
+	return true;
 }
 
 
@@ -209,7 +209,6 @@ bool CNN::Forward_S4()
 			}
 		}
 	}
-	return true;
 	#ifdef DEBUG
 	const int len = 10;
 	// float tmp[len];
@@ -223,6 +222,7 @@ bool CNN::Forward_S4()
 	}
 	printf("\n");
 	#endif
+	return true;
 }
 
 bool CNN::Forward_C5()
