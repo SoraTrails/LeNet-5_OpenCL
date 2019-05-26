@@ -29,7 +29,7 @@ bool CNN::train()
 			data_single_image = data_input_train + i * num_neuron_input_CNN;
 			data_single_label = data_output_train + i * num_neuron_output_CNN;
 
-			memcpy(neuron_input, data_single_image, num_neuron_input_CNN*sizeof(float));
+			// memcpy(neuron_input, data_single_image, num_neuron_input_CNN*sizeof(float));
 
 			// printf("Forward C1 %d:\n",i);
 			Forward_C1(i * num_neuron_input_CNN,cl_data_input_train);
@@ -39,6 +39,21 @@ bool CNN::train()
 				printf("%dth --> fordward_C1: %1d ms, ", i, t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
+
+			#ifdef DEBUG
+			const int len = 10;
+			float tmp[len];
+			clEnqueueReadBuffer(command_queue,Forward_C1_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("C1:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
+
 			Forward_S2();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -47,6 +62,19 @@ bool CNN::train()
 				gettimeofday(&tsBegin, NULL);
 			}
 			
+			#ifdef DEBUG
+			const int len = 10;
+			// float tmp[len];
+			clEnqueueReadBuffer(command_queue,Forward_S2_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("S2:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 			Forward_C3();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -55,6 +83,19 @@ bool CNN::train()
 				gettimeofday(&tsBegin, NULL);
 			}
 			
+			#ifdef DEBUG
+			const int len = 10;
+			// float tmp[len];
+			clEnqueueReadBuffer(command_queue,Forward_C3_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("C3:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 			Forward_S4();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -63,6 +104,19 @@ bool CNN::train()
 				gettimeofday(&tsBegin, NULL);
 			}
 			
+			#ifdef DEBUG
+			const int len = 10;
+			// float tmp[len];
+			clEnqueueReadBuffer(command_queue,Forward_S4_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("S4:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 			Forward_C5();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -71,6 +125,19 @@ bool CNN::train()
 				gettimeofday(&tsBegin, NULL);
 			}
 
+			#ifdef DEBUG
+			const int len = 10;
+			// float tmp[len];
+			clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("C5:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 			Forward_output();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -81,11 +148,11 @@ bool CNN::train()
 
 			#ifdef DEBUG
 			const int len = 10;
-			float tmp[len];
+			// float tmp[len];
 			clEnqueueReadBuffer(command_queue,Forward_out_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
-			// printf("C1:\n");
-			for(int i = 0;i < len;i++){
-				printf("%2.6f ",tmp[i]);
+			printf("out:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
 				// if(i % 10 == 9){
 				// 	printf("\nline:");
 				// }

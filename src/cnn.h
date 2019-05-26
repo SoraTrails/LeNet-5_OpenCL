@@ -241,9 +241,7 @@ private:
 	cl_device_id device_id;
 	cl_int err;
 	cl_int errs[FORWARD_NUM+1];
-	cl_event events[FORWARD_NUM+1];
-	cl_event event_pre;
-	cl_event event_suc;
+	// cl_event events[FORWARD_NUM+1];
 	cl_platform_id platform_id;
 	cl_uint num_platforms_returned;
 	cl_context context;

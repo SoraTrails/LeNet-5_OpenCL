@@ -38,7 +38,7 @@ bool CNN::Forward_C1(int index, cl_mem & Forward_in_mem0)
 	size_t local[3] = {1, height_image_C1_CNN,width_image_C1_CNN};
 	size_t global[3] = {num_map_C1_CNN, height_image_C1_CNN,width_image_C1_CNN};
 
-	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_C1], 3, NULL, global, NULL /*local*/, 0, NULL, &event_pre);
+	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_C1], 3, NULL, global, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Forward_C1. Error Code=%d\n", err); 
@@ -52,6 +52,7 @@ bool CNN::Forward_C1(int index, cl_mem & Forward_in_mem0)
 	// 	printf("Error enqueuing read buffer command Forward_C1. Error Code=%d\n", errs[1]);
 	// 	return false;
 	// }
+	clFinish(command_queue);
 	return true;
 }
 
@@ -69,13 +70,14 @@ bool CNN::Forward_S2()
 	// size_t local[3];
 	size_t global[3] = {num_map_S2_CNN, height_image_S2_CNN,width_image_S2_CNN};
 
-	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_S2], 3, NULL, global, NULL /*local*/, 1, &event_pre, &event_suc);
+	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_S2], 3, NULL, global, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Forward_S2. Error Code=%d\n", err); 
 		return false;
 	}
 
+	clFinish(command_queue);
 	return true;
 }
 
@@ -93,13 +95,14 @@ bool CNN::Forward_C3()
 	// size_t local[3];
 	size_t global[3] = {num_map_C3_CNN, height_image_C3_CNN,width_image_C3_CNN};
 
-	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_C3], 3, NULL, global, NULL /*local*/, 1, &event_suc, &event_pre);
+	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_C3], 3, NULL, global, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Forward_C3. Error Code=%d\n", err); 
 		return false;
 	}
 
+	clFinish(command_queue);
 	return true;
 }
 
@@ -116,13 +119,14 @@ bool CNN::Forward_S4()
 	// size_t local[3];
 	size_t global[3] = {num_map_S4_CNN, height_image_S4_CNN,width_image_S4_CNN};
 
-	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_S4], 3, NULL, global, NULL /*local*/, 1, &event_pre, &event_suc);
+	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_S4], 3, NULL, global, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Forward_S4. Error Code=%d\n", err); 
 		return false;
 	}
 
+	clFinish(command_queue);
 	return true;
 }
 
@@ -140,13 +144,14 @@ bool CNN::Forward_C5()
 	// size_t local[3];
 	size_t global[3] = {num_map_C5_CNN, height_image_C5_CNN,width_image_C5_CNN};
 
-	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_C5], 3, NULL, global, NULL /*local*/, 1, &event_suc, &event_pre);
+	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_C5], 3, NULL, global, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Forward_C5. Error Code=%d\n", err); 
 		return false;
 	}
 
+	clFinish(command_queue);
 	return true;
 }
 
@@ -164,7 +169,7 @@ bool CNN::Forward_output()
 	// size_t local[3];
 	size_t global[3] = {num_map_output_CNN, height_image_output_CNN,width_image_output_CNN};
 
-	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_OUT], 3, NULL, global, NULL /*local*/, 1, &event_pre, NULL);
+	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_OUT], 3, NULL, global, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Forward_OUT. Error Code=%d\n", err); 
@@ -180,7 +185,7 @@ bool CNN::Forward_output()
 	// 	neuron_output[i] += bias_output[i];
 	// 	neuron_output[i] = activation_function_tanh(neuron_output[i]);
 	// }
-	// return true;
+	return true;
 }
 
 

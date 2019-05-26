@@ -186,7 +186,7 @@ __kernel void  kernel_forward_c5(__global float *in,
 		__global const float* pi = in + addr2;       //输入图像
 		sum = 0.0;
 		__global const float* ppw = pw;
-		__global const float* ppi = pi + y * in_width + x;
+		__global const float* ppi = pi;
         for(wy = 0; wy < kernel_height; wy++)  {
 			for(wx = 0; wx < kernel_width; wx++) {
                 sum += *ppw++ * ppi[wy * in_width + wx];

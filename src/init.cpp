@@ -219,34 +219,34 @@ int CNN::init_opencl(){
 	// Buffer Write
 
 	// for(int i=0;i<FORWARD_NUM;i++){
-	// 	errs[i] = clEnqueueWriteBuffer(command_queue, *(for_mem[i]), CL_FALSE, 0, for_mem_in_out_len[i]*sizeof(cl_float), for_mem_src[i], 0, NULL, &events[i]);
+	// 	errs[i] = clEnqueueWriteBuffer(command_queue, *(for_mem[i]), CL_FALSE, 0, for_mem_in_out_len[i]*sizeof(cl_float), for_mem_src[i], 0, NULL, NULL);
 	// }
 	// clWaitForEvents(FORWARD_NUM+1, events);
 
 	for(int i=0;i<FORWARD_NUM;i++){
-		errs[i] = clEnqueueWriteBuffer(command_queue, Forward_bias[i], CL_FALSE, 0, for_mem_bw_len[i][0]*sizeof(cl_float), biases[i], 0, NULL, &events[i]);
+		errs[i] = clEnqueueWriteBuffer(command_queue, Forward_bias[i], CL_TRUE, 0, for_mem_bw_len[i][0]*sizeof(cl_float), biases[i], 0, NULL, NULL);
 		if(errs[i] != CL_SUCCESS){
 			cout << "can't write Forward bias buffer " << i << " memory"<< endl;
 		}
 	}
-	clWaitForEvents(FORWARD_NUM, events);
+	// clWaitForEvents(FORWARD_NUM, events);
 
 	for(int i=0;i<FORWARD_NUM;i++){
-		errs[i] = clEnqueueWriteBuffer(command_queue, Forward_weight[i], CL_FALSE, 0, for_mem_bw_len[i][1]*sizeof(cl_float), weights[i], 0, NULL, &events[i]);
+		errs[i] = clEnqueueWriteBuffer(command_queue, Forward_weight[i], CL_TRUE, 0, for_mem_bw_len[i][1]*sizeof(cl_float), weights[i], 0, NULL, NULL);
 		if(errs[i] != CL_SUCCESS){
 			cout << "can't write Forward weight buffer " << i << " memory"<< endl;
 		}
 	}
-	clWaitForEvents(FORWARD_NUM, events);
+	// clWaitForEvents(FORWARD_NUM, events);
 
-	errs[0] = clEnqueueWriteBuffer(command_queue, cl_data_input_train, CL_FALSE, 0, num_neuron_input_CNN*num_patterns_train_CNN*sizeof(cl_float), data_input_train, 0, NULL, &events[0]);
-	errs[1] = clEnqueueWriteBuffer(command_queue, cl_label_input_train, CL_FALSE, 0, num_neuron_output_CNN*num_patterns_train_CNN*sizeof(cl_float), data_output_train, 0, NULL, &events[1]);
-	errs[2] = clEnqueueWriteBuffer(command_queue, cl_data_input_test, CL_FALSE, 0, num_neuron_input_CNN*num_patterns_test_CNN*sizeof(cl_float), data_input_test, 0, NULL, &events[2]);
-	errs[3] = clEnqueueWriteBuffer(command_queue, cl_label_input_test, CL_FALSE, 0, num_neuron_output_CNN*num_patterns_test_CNN*sizeof(cl_float), data_output_test, 0, NULL, &events[3]);
+	errs[0] = clEnqueueWriteBuffer(command_queue, cl_data_input_train, CL_TRUE, 0, num_neuron_input_CNN*num_patterns_train_CNN*sizeof(cl_float), data_input_train, 0, NULL, NULL);
+	errs[1] = clEnqueueWriteBuffer(command_queue, cl_label_input_train, CL_TRUE, 0, num_neuron_output_CNN*num_patterns_train_CNN*sizeof(cl_float), data_output_train, 0, NULL, NULL);
+	errs[2] = clEnqueueWriteBuffer(command_queue, cl_data_input_test, CL_TRUE, 0, num_neuron_input_CNN*num_patterns_test_CNN*sizeof(cl_float), data_input_test, 0, NULL, NULL);
+	errs[3] = clEnqueueWriteBuffer(command_queue, cl_label_input_test, CL_TRUE, 0, num_neuron_output_CNN*num_patterns_test_CNN*sizeof(cl_float), data_output_test, 0, NULL, NULL);
 	if(errs[1] != CL_SUCCESS || errs[2] != CL_SUCCESS || errs[3] != CL_SUCCESS || errs[0] != CL_SUCCESS){
 		cout << "can't write input memory"<< endl;
 	}
-	clWaitForEvents(4, events);
+	// clWaitForEvents(4, events);
 
 	// Buffer Create End
 	//////////////////////
