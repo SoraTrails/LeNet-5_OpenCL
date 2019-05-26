@@ -79,15 +79,15 @@ bool CNN::train()
 				gettimeofday(&tsBegin, NULL);
 			}
 
-			#ifdef DEBUG
-			float tmp[10];
-			// clEnqueueReadBuffer(command_queue,Backward_out_mem,CL_TRUE,0,10*sizeof(float),tmp,NULL,NULL,NULL);
-			printf("%d : ",i);
-			for (int i=0;i<10;i++){
-				printf("%.6f ",neuron_output[i]);
-			}
-			printf("\n");
-			#endif
+			// #ifdef DEBUG
+			// float tmp[10];
+			// // clEnqueueReadBuffer(command_queue,Backward_out_mem,CL_TRUE,0,10*sizeof(float),tmp,NULL,NULL,NULL);
+			// printf("%d : ",i);
+			// for (int i=0;i<10;i++){
+			// 	printf("%.6f ",neuron_output[i]);
+			// }
+			// printf("\n");
+			// #endif
 			
 			//2 输出误差逆传播
 			Backward_output();
