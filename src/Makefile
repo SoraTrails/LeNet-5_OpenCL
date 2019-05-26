@@ -10,7 +10,7 @@ PREDICT_FLAGS= -O3 -std=c++11 -DTEST_PREDICT -lopencv_core -lopencv_imgproc -lop
 src = $(wildcard *.cpp)
 target = $(patsubst %.cpp, ${OUTPUT_PATH}/%.o, ${src})
 
-all:../Release/OpenCL_CNN ../Release/OpenCL_Predict_CNN
+all:../Release/OpenCL_CNN #../Release/OpenCL_Predict_CNN
 
 ../Release/OpenCL_CNN: ${target}
 	g++ -o ../Release/OpenCL_CNN ${target} ${FLAGS}

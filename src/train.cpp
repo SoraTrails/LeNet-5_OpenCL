@@ -106,6 +106,14 @@ bool CNN::train()
 				gettimeofday(&tsBegin, NULL);
 			}			
 			
+			float tmp[10];
+			clEnqueueReadBuffer(command_queue,Backward_out_mem,CL_TRUE,0,10*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("%d : ",i);
+			for (int i=0;i<10;i++){
+				printf("%.6f ",tmp[i]);
+			}
+			printf("\n");
+
 			Backward_C5();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);

@@ -277,37 +277,59 @@ __kernel void  kernel_backward_s4(
 	__global float *delta_bias,	 // delta_bias_C5
 	__global float *out //delta_neuron_S4
 ){
-	//[16]
+	//[16,120]
+	//[1,120]
 	int inc = get_global_id(0);
+	int outc = get_global_id(1);
 	const int width_kernel_conv_CNN = 5;
 	const int height_kernel_conv_CNN = 5;
 	const int num_map_S4_CNN = 16;
 	const int height_image_S4_CNN = 5;
 	const int width_image_S4_CNN = 5;
 	const int num_map_C5_CNN = 120;
+	__local float out_tmp[120][25];
+	for(int i=0;i<25;i++)
+		out_tmp[outc][i] = 0;
 
-	for (int outc = 0; outc < num_map_C5_CNN; outc++) {
-		int addr1 = width_kernel_conv_CNN*height_kernel_conv_CNN*(num_map_S4_CNN * outc + inc); //找到对应的卷积核
-		int addr2 = height_image_S4_CNN*width_image_S4_CNN*inc;   //找到对应的S4输入
+	// for (int outc = 0; outc < num_map_C5_CNN; outc++) {
+	int addr1 = width_kernel_conv_CNN*height_kernel_conv_CNN*(num_map_S4_CNN * outc + inc); //找到对应的卷积核
+	int addr2 = height_image_S4_CNN*width_image_S4_CNN*inc;   //找到对应的S4输入
 
-		for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
-			for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
-				int addr3 = addr1 + wy*width_kernel_conv_CNN + wx;  //卷积核索引 W_kj
-				int addr4 = addr2 + wy*width_image_S4_CNN + wx;     //S4中的像素索引 S4 k
-				out[addr4] = in[outc] * weight_C5[addr3] * (1.0 - neuron_S4[addr4] * neuron_S4[addr4]);
-				delta_weight[addr3] = in[outc] * neuron_S4[addr4];
-				// delta_bias[outc] += in[outc];
-			}
+	for (int wy = 0; wy < height_kernel_conv_CNN; wy++) {
+		for (int wx = 0; wx < width_kernel_conv_CNN; wx++) {
+			int addr3 = addr1 + wy*width_kernel_conv_CNN + wx;  //卷积核索引 W_kj
+			int addr4 = addr2 + wy*width_image_S4_CNN + wx;     //S4中的像素索引 S4 k
+			int addr4_tmp = wy*width_image_S4_CNN + wx;
+			out_tmp[outc][addr4_tmp] += in[outc] * weight_C5[addr3] * (1.0 - neuron_S4[addr4] * neuron_S4[addr4]);
+			delta_weight[addr3] = in[outc] * neuron_S4[addr4];
+			// delta_bias[outc] += in[outc];
 		}
-		// delta_bias[outc] += in[outc] * 25;
 	}
-	// delta_bias[outc] += in[outc] * 25 * 16;
-
-	for(int i=0;i<6;i++){
-		delta_bias[inc*7+i] = in[inc*7+i] * 400;
+	if(inc == 0)
+		delta_bias[outc] = in[outc] * 25;
+	if(outc < 60){
+		for(int i=0;i<25;i++)
+			out_tmp[outc][i] += out_tmp[outc + 60][i];
 	}
-	if(inc < 8){
-		delta_bias[inc + 112] = in[inc + 112] * 400;
+	barrier(CLK_LOCAL_MEM_FENCE);
+	if(outc < 30){
+		for(int i=0;i<25;i++)
+			out_tmp[outc][i] += out_tmp[outc + 30][i];
+	}
+	barrier(CLK_LOCAL_MEM_FENCE);
+	if(outc < 15){
+		for(int i=0;i<25;i++)
+			out_tmp[outc][i] += out_tmp[outc + 15][i];
+	}
+	barrier(CLK_LOCAL_MEM_FENCE);
+	if(outc < 5){
+		for(int i=0;i<25;i++)
+			out_tmp[outc][i] += out_tmp[outc + 5][i] + out_tmp[outc + 10][i] ;
+	}
+	barrier(CLK_LOCAL_MEM_FENCE);
+	if(outc == 0){
+		for(int i=0;i<25;i++)
+			out[height_image_S4_CNN*width_image_S4_CNN*inc + i] = out_tmp[0][i] + out_tmp[1][i] + out_tmp[2][i] + out_tmp[3][i] + out_tmp[4][i];
 	}
 }
 

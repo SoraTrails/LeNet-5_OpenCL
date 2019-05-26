@@ -40,6 +40,7 @@ bool CNN::Backward_output(int index)
 		printf("Unable to enqueue kernel command Backward_output. Error Code=%d\n", err); 
 		return false;
 	}
+	clFinish(command_queue);
 
 	return true;
 }
@@ -66,6 +67,7 @@ bool CNN::Backward_C5()
 		printf("Unable to enqueue kernel command Backward_C5. Error Code=%d\n", err); 
 		return false;
 	}
+	clFinish(command_queue);
 
 	return true;
 }
@@ -82,16 +84,17 @@ bool CNN::Backward_S4()
 		printf("Unable to set kernel Backward_S4 arguments.\n");
 		return false;
 	}
-	// size_t local[3];
-	size_t global[1] = {num_map_S4_CNN};
+	size_t local[2] = {1,num_map_C5_CNN} ;
+	size_t global[2] = {num_map_S4_CNN,num_map_C5_CNN};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_S4], 1, NULL, global, NULL /*local*/, 1, &event_suc, &event_pre);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_S4], 1, NULL, global, local /*local*/, 1, &event_suc, &event_pre);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_S4. Error Code=%d\n", err); 
 		return false;
 	}
 
+	clFinish(command_queue);
 	return true;
 }
 
@@ -117,6 +120,7 @@ bool CNN::Backward_C3()
 		return false;
 	}
 
+	clFinish(command_queue);
 	return true;
 }
 
@@ -132,16 +136,17 @@ bool CNN::Backward_S2()
 		printf("Unable to set kernel Backward_S2 arguments.\n");
 		return false;
 	}
-	// size_t local[3];
+	size_t local[1]= {1};
 	size_t global[1] = {num_map_S2_CNN};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_S2], 1, NULL, global, NULL /*local*/, 1, &event_suc, &event_pre);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_S2], 1, NULL, global, local /*local*/, 1, &event_suc, &event_pre);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_S2. Error Code=%d\n", err); 
 		return false;
 	}
 
+	clFinish(command_queue);
 	return true;
 }
 
@@ -167,6 +172,7 @@ bool CNN::Backward_C1()
 		return false;
 	}
 
+	clFinish(command_queue);
 	return true;
 }
 
