@@ -71,6 +71,14 @@ bool CNN::Forward_C1()
 		}
 
 	}
+	printf("C1:\n");
+    for(int i = 0;i < 4704;i++){
+        printf("%2.6f ",neuron_C1[i]);
+        if(i % 10 == 9){
+            printf("\nline:");
+        }
+    }
+    printf("\n");
 	return true;
 }
 
