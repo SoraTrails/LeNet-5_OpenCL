@@ -39,21 +39,6 @@ bool CNN::train()
 				printf("%dth --> fordward_C1: %1d ms, ", i, t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
-
-			#ifdef DEBUG
-			const int len = 4074;
-			float tmp[len];
-			clEnqueueReadBuffer(command_queue,Forward_C1_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
-			printf("C1:\n");
-			for(int i = 0;i < len;i++){
-				printf("%2.6f ",tmp[i]);
-				if(i % 10 == 9){
-					printf("\nline:");
-				}
-			}
-			printf("\n");
-			#endif
-
 			Forward_S2();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -93,6 +78,20 @@ bool CNN::train()
 				printf("output: %1d ms\n", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
+
+			#ifdef DEBUG
+			const int len = 10;
+			float tmp[len];
+			clEnqueueReadBuffer(command_queue,Forward_out_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			// printf("C1:\n");
+			for(int i = 0;i < len;i++){
+				printf("%2.6f ",tmp[i]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 
 			//////////////
 			// for(int i=0;i<FORWARD_NUM+1;i++){
