@@ -1,5 +1,6 @@
 OUTPUT_PATH=build
-FLAGS= -std=c++11 -Wall -O3 -march=native
+DEBUG=
+FLAGS= -std=c++11 ${DEBUG} -Wall -O3 -march=native
 PREDICT_FLAGS= -O3 -std=c++11 -DTEST_PREDICT -lopencv_core -lopencv_imgproc -lopencv_highgui -march=native
 
 src = $(wildcard *.cpp)
