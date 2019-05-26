@@ -105,7 +105,7 @@ __kernel void  kernel_forward_c3(__global float *in,
 	int wy = 0;
 	float out_index = 0.0;
 	for (inc=0; inc<in_num; inc++) {
-		if (!tbl[inc*16+channel]) continue;
+		if (!tbl[inc][channel]) continue;
         int addr1 = (in_num * channel + inc) * kernel_height * kernel_width;
 		int addr2 = (inc)*in_width*in_height;
 		__global const float* pw = weight + addr1;   //卷积核

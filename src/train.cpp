@@ -185,8 +185,18 @@ bool CNN::train()
 				printf("%dth --> backward_output: %1d ms, ", i, t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}			
-			
 
+			#ifdef DEBUG
+			clEnqueueReadBuffer(command_queue,Backward_out_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("back out:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 
 			Backward_C5();
 			if (i % 1000 == 0) {
@@ -195,7 +205,17 @@ bool CNN::train()
 				printf("C5: %1d ms, ", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
-			
+			#ifdef DEBUG
+			clEnqueueReadBuffer(command_queue,Backward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("C5:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 			Backward_S4();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -203,7 +223,17 @@ bool CNN::train()
 				printf("S4: %1d ms, ", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}			
-			
+			#ifdef DEBUG
+			clEnqueueReadBuffer(command_queue,Backward_S4_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("S4:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 			Backward_C3();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -211,7 +241,17 @@ bool CNN::train()
 				printf("C3: %1d ms, ", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
-			
+			#ifdef DEBUG
+			clEnqueueReadBuffer(command_queue,Backward_C3_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("C3:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 			Backward_S2();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -219,7 +259,18 @@ bool CNN::train()
 				printf("S2: %1d ms, ", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
-			
+			#ifdef DEBUG
+			clEnqueueReadBuffer(command_queue,Backward_S2_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("S2:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
+
 			Backward_C1();
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -227,7 +278,18 @@ bool CNN::train()
 				printf("C1: %1d ms, ", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
-			
+				#ifdef DEBUG
+			clEnqueueReadBuffer(command_queue,Backward_C1_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("C1:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
+
 			Backward_input(i * num_neuron_input_CNN);
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
@@ -235,6 +297,18 @@ bool CNN::train()
 				printf("input: %1d ms \n", t1Duration);
 				gettimeofday(&tsBegin, NULL);
 			}
+
+			#ifdef DEBUG
+			clEnqueueReadBuffer(command_queue,Backward_in_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+			printf("input:");
+			for(int j = 0;j < len;j++){
+				printf("%2.6f ",tmp[j]);
+				// if(i % 10 == 9){
+				// 	printf("\nline:");
+				// }
+			}
+			printf("\n");
+			#endif
 
 			UpdateWeights();
 
