@@ -63,7 +63,7 @@ bool CNN::train()
 			}
 			
 			#ifdef DEBUG
-			const int len = 10;
+			//const int len = 10;
 			// float tmp[len];
 			clEnqueueReadBuffer(command_queue,Forward_S2_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
 			printf("S2:");
@@ -84,7 +84,7 @@ bool CNN::train()
 			}
 			
 			#ifdef DEBUG
-			const int len = 10;
+			//const int len = 10;
 			// float tmp[len];
 			clEnqueueReadBuffer(command_queue,Forward_C3_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
 			printf("C3:");
@@ -105,7 +105,7 @@ bool CNN::train()
 			}
 			
 			#ifdef DEBUG
-			const int len = 10;
+		//	const int len = 10;
 			// float tmp[len];
 			clEnqueueReadBuffer(command_queue,Forward_S4_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
 			printf("S4:");
@@ -126,7 +126,7 @@ bool CNN::train()
 			}
 
 			#ifdef DEBUG
-			const int len = 10;
+		//	const int len = 10;
 			// float tmp[len];
 			clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
 			printf("C5:");
@@ -147,7 +147,7 @@ bool CNN::train()
 			}
 
 			#ifdef DEBUG
-			const int len = 10;
+		//	const int len = 10;
 			// float tmp[len];
 			clEnqueueReadBuffer(command_queue,Forward_out_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
 			printf("out:");
