@@ -71,14 +71,19 @@ bool CNN::Forward_C1()
 		}
 
 	}
-	printf("C1:\n");
-    for(int i = 0;i < 4704;i++){
-        printf("%2.6f ",neuron_C1[i]);
-        if(i % 10 == 9){
-            printf("\nline:");
-        }
-    }
-    printf("\n");
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("C1:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",neuron_C1[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
@@ -108,6 +113,19 @@ bool CNN::Forward_S2()
 			}
 		}
 	}
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("S2:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",neuron_S2[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
@@ -150,6 +168,19 @@ bool CNN::Forward_C3()
 		}
 	}
 	return true;
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("C3:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",neuron_C3[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 }
 
 
@@ -179,6 +210,19 @@ bool CNN::Forward_S4()
 		}
 	}
 	return true;
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("S4:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",neuron_S4[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 }
 
 bool CNN::Forward_C5()
@@ -240,6 +284,19 @@ bool CNN::Forward_C5()
 		}
 	}
 #endif
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("C5:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",neuron_C5[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
@@ -253,6 +310,19 @@ bool CNN::Forward_output()
 		neuron_output[i] += bias_output[i];
 		neuron_output[i] = activation_function_tanh(neuron_output[i]);
 	}
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("out:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",neuron_output[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
