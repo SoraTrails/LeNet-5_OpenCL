@@ -35,7 +35,7 @@ bool CNN::Forward_C1(int index, cl_mem & Forward_in_mem0)
 		printf("Unable to set kernel Forward_C1 arguments.\n");
 		return false;
 	}
-	// size_t local[3];
+	size_t local[3] = {1, height_image_C1_CNN,width_image_C1_CNN};
 	size_t global[3] = {num_map_C1_CNN, height_image_C1_CNN,width_image_C1_CNN};
 
 	err = clEnqueueNDRangeKernel(command_queue, Forward_kernel[FORWARD_C1], 3, NULL, global, NULL /*local*/, 0, NULL, &event_pre);

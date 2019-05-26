@@ -8,43 +8,41 @@ __constant int tbl[6][16] = {
 };
 
 __kernel void  kernel_forward_c1(__global float *in,
-                      __global float  *weight,
+                      __constant float  *weight,
                       __global float  *bias,
                       __global float  *out,
 					  int input_index)
 {
 	// printf("%d\n",input_index);
+    //[6,28,28]
+    //[1,28,28]
 	int channel = get_global_id(0);
-	int out_height = get_global_size(1);
-	int out_width = get_global_size(2);
+	int out_height = get_global_size(1);//28
+	int out_width = get_global_size(2);//28
     int  y = get_global_id(1);
     int  x = get_global_id(2);
 	int kernel_width = 5;
 	int kernel_height = 5;
 	int in_width = 32;
 	int in_height = 32;
-	int in_num = 1;
     int index = (channel*out_height*out_width) + y*out_width + x;
 	float sum = 0.0;
-	int inc = 0;
-	int wx = 0;
-	int wy = 0;
 	float out_val = 0.0;
-	for (inc=0; inc<in_num; inc++) {
-        int addr1 = (in_num * channel + inc) * kernel_height * kernel_width;
-		int addr2 = (inc)*in_width*in_height;
-		__global const float* pw = weight + addr1;   //卷积核
-		__global const float* pi = in + input_index + addr2;       //输入图像
-		sum = 0.0;
-		__global const float* ppw = pw;
-		__global const float* ppi = pi + y * in_width + x;
-        for(wy = 0; wy < kernel_height; wy++)  {
-			for(wx = 0; wx < kernel_width; wx++) {
-                sum += *ppw++ * ppi[wy * in_width + wx];
-		    }
-	     }
-	     out_val += sum;
-	}
+    // __local float local_weight[32*32];
+    // local_weight[x*32+y] = weight[channel * 25 + x*32+y];
+
+
+    __constant const float* ppw = weight + channel * kernel_height * kernel_width;   //卷积核
+    sum = 0.0;
+    __global const float* ppi = in + input_index; ;
+    for(int wy = 0; wy < kernel_height; wy++)  {
+        for(int wx = 0; wx < kernel_width; wx++) {
+            // sum += ppw[wy*kernel_width+wx] * ppi[y * in_width + x + wy * in_width + wx];
+            sum += ppw[wy*kernel_width+wx] * ppi[(y+wy) * in_width + (x + wx)];
+        }
+    }
+    out_val += sum;
+
 	out_val += bias[channel];
 	out_val = tanh((float)(out_val));
 	out[index] = out_val;

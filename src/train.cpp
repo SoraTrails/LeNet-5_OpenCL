@@ -48,7 +48,7 @@ bool CNN::train()
 			for(int i = 0;i < len;i++){
 				printf("%2.6f ",tmp[i]);
 				if(i % 10 == 9){
-					printf("\n");
+					printf("\nline:");
 				}
 			}
 			printf("\n");
