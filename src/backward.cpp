@@ -34,21 +34,34 @@ bool CNN::Backward_output()
 */
 bool CNN::Backward_output()
 {
-        init_variable(delta_neuron_output, 0.0, num_neuron_output_CNN);
+	init_variable(delta_neuron_output, 0.0, num_neuron_output_CNN);
 
-        float dE_dy[num_neuron_output_CNN];
-        init_variable(dE_dy, 0.0, num_neuron_output_CNN);
-        loss_function_gradient(neuron_output, data_single_label, dE_dy, num_neuron_output_CNN); // 损失函数: mean squared error(均方差)
+	float dE_dy[num_neuron_output_CNN];
+	init_variable(dE_dy, 0.0, num_neuron_output_CNN);
+	loss_function_gradient(neuron_output, data_single_label, dE_dy, num_neuron_output_CNN); // 损失函数: mean squared error(均方差)
 
-        // delta = dE/da = (dE/dy) * (dy/da)
-        for (int i = 0; i < num_neuron_output_CNN; i++) {
-                float dy_da[num_neuron_output_CNN];
-                init_variable(dy_da, 0.0, num_neuron_output_CNN);
+	// delta = dE/da = (dE/dy) * (dy/da)
+	for (int i = 0; i < num_neuron_output_CNN; i++) {
+			float dy_da[num_neuron_output_CNN];
+			init_variable(dy_da, 0.0, num_neuron_output_CNN);
 
-                dy_da[i] = activation_function_tanh_derivative(neuron_output[i]);
-                delta_neuron_output[i] = dot_product(dE_dy, dy_da, num_neuron_output_CNN);
-        }
-        return true;
+			dy_da[i] = activation_function_tanh_derivative(neuron_output[i]);
+			delta_neuron_output[i] = dot_product(dE_dy, dy_da, num_neuron_output_CNN);
+	}
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("output:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",delta_neuron_output[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
+	return true;
 }
 
 
@@ -72,7 +85,19 @@ bool CNN::Backward_C5()
 			delta_bias_output[addr2] += delta_neuron_output[j];
 		}
 	}
-
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("C5:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",delta_neuron_C5[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
@@ -158,7 +183,19 @@ bool CNN::Backward_S4()
 		}
 		delta_bias_C5[outc] += delta_neuron_C5[index]*400;
 	}
-
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("S4:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",delta_neuron_S4[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
@@ -193,7 +230,20 @@ bool CNN::Backward_C3()
 				}
 			}//index
 		}
+	}	
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("C3:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",delta_neuron_C3[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
 	}
+	printf("\n");
+	#endif
 	return true;
 }
 
@@ -281,7 +331,19 @@ bool CNN::Backward_S2()
 			} //index
 		}
 	}
-
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("S2:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",delta_neuron_S2[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
@@ -317,7 +379,19 @@ bool CNN::Backward_C1()
 			}//index
 		}
 	}
-
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("C1:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",delta_neuron_C1[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
@@ -404,7 +478,19 @@ bool CNN::Backward_input()
 			} //index
 		}
 	}
-
+	#ifdef DEBUG
+	const int len = 10;
+	// float tmp[len];
+	// clEnqueueReadBuffer(command_queue,Forward_C5_mem,CL_TRUE,0,len*sizeof(float),tmp,NULL,NULL,NULL);
+	printf("input:");
+	for(int j = 0;j < len;j++){
+		printf("%2.6f ",delta_neuron_input[j]);
+		// if(i % 10 == 9){
+		// 	printf("\nline:");
+		// }
+	}
+	printf("\n");
+	#endif
 	return true;
 }
 
