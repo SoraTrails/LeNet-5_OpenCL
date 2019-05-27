@@ -252,6 +252,11 @@ private:
 	cl_kernel Backward_kernel[BACKWARD_NUM];
 	cl_kernel Update_weights;
 
+	cl_kernel Backward_kernel_s2_weight;
+	cl_kernel Backward_kernel_s2_bias;
+	cl_kernel Backward_kernel_input_weight;
+	cl_kernel Backward_kernel_input_bias;
+
 	cl_mem cl_data_input_train;
 	cl_mem cl_label_input_train;
 	cl_mem cl_data_input_test;

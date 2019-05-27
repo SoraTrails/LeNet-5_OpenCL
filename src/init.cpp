@@ -201,6 +201,27 @@ int CNN::init_opencl(){
 		printf("Unable to create kernel object Update_weights kernel. Error Code=%d\n", err); 
 		return -1;
 	}
+	
+	Backward_kernel_s2_weight = clCreateKernel(program, "kernel_backward_s2_weight", &err);
+	if (err != CL_SUCCESS){
+		printf("Unable to create kernel object kernel_backward_s2_weight kernel. Error Code=%d\n", err); 
+		return -1;
+	}
+	Backward_kernel_s2_bias = clCreateKernel(program, "kernel_backward_s2_bias", &err);
+	if (err != CL_SUCCESS){
+		printf("Unable to create kernel object kernel_backward_s2_bias kernel. Error Code=%d\n", err); 
+		return -1;
+	}
+	Backward_kernel_input_weight = clCreateKernel(program, "kernel_backward_input_weight", &err);
+	if (err != CL_SUCCESS){
+		printf("Unable to create kernel object kernel_backward_input_weight kernel. Error Code=%d\n", err); 
+		return -1;
+	}
+	Backward_kernel_input_bias = clCreateKernel(program, "kernel_backward_input_bias", &err);
+	if (err != CL_SUCCESS){
+		printf("Unable to create kernel object kernel_backward_input_bias kernel. Error Code=%d\n", err); 
+		return -1;
+	}
 
 	for(int i=0;i<FORWARD_NUM;i++){
 		Update_bias[i] = clCreateBuffer(context, CL_MEM_READ_WRITE,
