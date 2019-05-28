@@ -202,10 +202,12 @@ bool CNN::Backward_C1()
 		printf("Unable to set kernel Backward_C1 arguments.\n");
 		return false;
 	}
-	// size_t local[3];
-	size_t global[1] = {num_map_C1_CNN};
+	//[6,14,14]
+	//[1,14,14]
+	size_t global[3] = {6,14,14};
+	size_t local[3] ={1,14,14};	
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_C1], 1, NULL, global, NULL /*local*/, 0, NULL, NULL);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_C1], 3, NULL, global, local /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_C1. Error Code=%d\n", err); 
