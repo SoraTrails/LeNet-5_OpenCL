@@ -223,28 +223,13 @@ __kernel void  kernel_backward_output(
 )
 {
 	//[10]
-	int channel = get_global_id(0);
+	int i = get_global_id(0);
 	__global float *labels = label + index;
-
-	out[channel] = 0.0f;
 	const int num_neuron_output_CNN = 10;
 
-	//can use local memory optimization
-	float dE_dy[10];
-	for(int i=0;i<num_neuron_output_CNN;i++){
-		dE_dy[i] = in[i] - labels[i];
-	}
+	float res = (in[i] - labels[i]) * (1.0 - in[i] * in[i]);
 
-	float dy_da[10];
-	for(int i=0;i<num_neuron_output_CNN;i++){
-		dy_da[i] = 0.0f;
-	}
-	dy_da[channel] = 1.0 - in[channel] * in[channel];
-	float res = 0.0f;
-	for(int i=0;i<num_neuron_output_CNN;i++){
-		res += dy_da[i] * dE_dy[i];
-	}
-	out[channel] = res;
+	out[i] = res;
 }
 
 __kernel void  kernel_backward_c5(
@@ -354,7 +339,7 @@ __kernel void  kernel_backward_c3(
 __kernel void  kernel_backward_s2(
 	__global float *in, //delta_neuron_C3
 	__global float *neuron_S2, //neuron_S2(in)
-	__global float *weight_C3 //weight_C3(in) 
+	__global float *weight_C3, //weight_C3(in) 
 	// __global float *delta_weight, // delta_weight_C3
 	// __global float *delta_bias,	 // delta_bias_C3
 	__global float *out //delta_neuron_S2
@@ -403,7 +388,7 @@ __kernel void  kernel_backward_s2_weight(
 		for (int x = 0; x < 10; x++) {
 			int index = (outc*10*10) + y*10 + x;  //C3 当前神经元 j
 			int addr2 = 14*14*inc +  y * 14 + x + wy*14 + wx;   //找到对应的S2输入
-			delta_weight[addr3] += in[index] * neuron_S2[addr4];
+			delta_weight[addr3] += in[index] * neuron_S2[addr2];
 		}
 	}
 }

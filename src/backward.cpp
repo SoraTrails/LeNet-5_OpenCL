@@ -157,9 +157,9 @@ bool CNN::Backward_S2()
 		return false;
 	}
 	// size_t local[1]= {1};
-	size_t global[3] = {25,16,6};
+	size_t global1[3] = {25,16,6};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_s2_weight, 3, NULL, global, NULL /*local*/, 0, NULL, NULL);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_s2_weight, 3, NULL, global1, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_S2. Error Code=%d\n", err); 
@@ -177,9 +177,9 @@ bool CNN::Backward_S2()
 		return false;
 	}
 	// size_t local[1]= {1};
-	size_t global[1] = {16};
+	size_t global2[1] = {16};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_s2_bias, 1, NULL, global, NULL /*local*/, 0, NULL, NULL);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_s2_bias, 1, NULL, global2, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_S2. Error Code=%d\n", err); 
@@ -251,9 +251,9 @@ bool CNN::Backward_input(int index)
 		return false;
 	}
 	// size_t local[3];
-	size_t global[3] = {6,5,5};
+	size_t global1[3] = {6,5,5};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_input_weight, 3, NULL, global, NULL /*local*/, 0, NULL, NULL);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_input_weight, 3, NULL, global1, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_input. Error Code=%d\n", err); 
@@ -272,9 +272,9 @@ bool CNN::Backward_input(int index)
 		return false;
 	}
 	// size_t local[3];
-	size_t global[1] = {6};
+	size_t global2[1] = {6};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_input_bias, 1, NULL, global, NULL /*local*/, 0, NULL, NULL);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_input_bias, 1, NULL, global2, NULL /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_input. Error Code=%d\n", err); 

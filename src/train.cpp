@@ -178,7 +178,7 @@ bool CNN::train()
 
 			//2 输出误差逆传播
 			// printf("Backward C1 %d:\n",i);
-			Backward_output(i * num_neuron_input_CNN);
+			Backward_output(i * 10);
 			if (i % 1000 == 0) {
 				gettimeofday(&tsEnd, NULL);
 				t1Duration = 1000000L * (tsEnd.tv_sec - tsBegin.tv_sec) + (tsEnd.tv_usec - tsBegin.tv_usec);
