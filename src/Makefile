@@ -26,5 +26,5 @@ ${target}: ${OUTPUT_PATH}/%.o:%.cpp cnn.h
 .PHONY: clean
 
 clean:
-	rm build/*
-	rm ../Release/OpenCL_CNN ../Release/OpenCL_Predict_CNN
+	-rm build/*
+	-rm ../Release/OpenCL_CNN ../Release/OpenCL_Predict_CNN
