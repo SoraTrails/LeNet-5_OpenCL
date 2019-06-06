@@ -110,10 +110,10 @@ bool CNN::Backward_C3()
 		printf("Unable to set kernel Backward_C3 arguments.\n");
 		return false;
 	}
-	// size_t local[3];
-	size_t global[1] = {num_map_C3_CNN};
+	size_t local[3]={1,5,5};
+	size_t global[3] = {num_map_C3_CNN,5,5};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_C3], 1, NULL, global, NULL /*local*/, 0, NULL, NULL);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_C3], 3, NULL, global, local /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_C3. Error Code=%d\n", err); 
@@ -220,26 +220,26 @@ bool CNN::Backward_C1()
 
 bool CNN::Backward_input(int index)
 {
-	if (clSetKernelArg(Backward_kernel[BACKWARD_IN], 0, sizeof(cl_mem), &Backward_C1_mem) ||
-		clSetKernelArg(Backward_kernel[BACKWARD_IN], 1, sizeof(cl_mem), &cl_data_input_train) ||
-		clSetKernelArg(Backward_kernel[BACKWARD_IN], 2, sizeof(cl_mem), &Forward_weight[FORWARD_C1]) ||
-		// clSetKernelArg(Backward_kernel[BACKWARD_IN], 3, sizeof(cl_mem), &Backward_weight[BACKWARD_C1]) ||
-		// clSetKernelArg(Backward_kernel[BACKWARD_IN], 4, sizeof(cl_mem), &Backward_bias[BACKWARD_C1]) ||
-		clSetKernelArg(Backward_kernel[BACKWARD_IN], 3, sizeof(cl_mem), &Backward_in_mem) || 
-		clSetKernelArg(Backward_kernel[BACKWARD_IN], 4, sizeof(cl_int), &index) != CL_SUCCESS)
-	{
-		printf("Unable to set kernel Backward_input arguments.\n");
-		return false;
-	}
-	// size_t local[3];
-	size_t global[2] = {32,32};
+	// if (clSetKernelArg(Backward_kernel[BACKWARD_IN], 0, sizeof(cl_mem), &Backward_C1_mem) ||
+	// 	clSetKernelArg(Backward_kernel[BACKWARD_IN], 1, sizeof(cl_mem), &cl_data_input_train) ||
+	// 	clSetKernelArg(Backward_kernel[BACKWARD_IN], 2, sizeof(cl_mem), &Forward_weight[FORWARD_C1]) ||
+	// 	// clSetKernelArg(Backward_kernel[BACKWARD_IN], 3, sizeof(cl_mem), &Backward_weight[BACKWARD_C1]) ||
+	// 	// clSetKernelArg(Backward_kernel[BACKWARD_IN], 4, sizeof(cl_mem), &Backward_bias[BACKWARD_C1]) ||
+	// 	clSetKernelArg(Backward_kernel[BACKWARD_IN], 3, sizeof(cl_mem), &Backward_in_mem) || 
+	// 	clSetKernelArg(Backward_kernel[BACKWARD_IN], 4, sizeof(cl_int), &index) != CL_SUCCESS)
+	// {
+	// 	printf("Unable to set kernel Backward_input arguments.\n");
+	// 	return false;
+	// }
+	// // size_t local[3];
+	// size_t global[2] = {32,32};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_IN], 2, NULL, global, NULL /*local*/, 0, NULL, NULL);
-	if (err != CL_SUCCESS)
-	{
-		printf("Unable to enqueue kernel command Backward_input. Error Code=%d\n", err); 
-		return false;
-	}
+	// err = clEnqueueNDRangeKernel(command_queue, Backward_kernel[BACKWARD_IN], 2, NULL, global, NULL /*local*/, 0, NULL, NULL);
+	// if (err != CL_SUCCESS)
+	// {
+	// 	printf("Unable to enqueue kernel command Backward_input. Error Code=%d\n", err); 
+	// 	return false;
+	// }
 
 	if (clSetKernelArg(Backward_kernel_input_weight, 0, sizeof(cl_mem), &Backward_C1_mem) ||
 		clSetKernelArg(Backward_kernel_input_weight, 1, sizeof(cl_mem), &cl_data_input_train) ||

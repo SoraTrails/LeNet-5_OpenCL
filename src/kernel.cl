@@ -307,42 +307,41 @@ __kernel void  kernel_backward_c3(
 	__global float *delta_bias,	 // delta_bias_S4
 	__global float *out //delta_neuron_C3
 ){
-	//[16]
+	//[16,5,5]
+	//[1,5,5]
 	int outc = get_global_id(0);
+	int y = get_global_id(1);
+	int x = get_global_id(2);
 	const float scale_factor = 0.25f;
-	const int width_kernel_pooling_CNN = 2;
-	const int height_kernel_pooling_CNN = 2;
-	const int width_image_C3_CNN = 10;
-	const int height_image_C3_CNN = 10;
-	const int width_image_S4_CNN = 5;
-	const int height_image_S4_CNN = 5;
-	int block = width_image_C3_CNN * height_image_C3_CNN * outc; //C3
-	
-	delta_weight[outc] = 0.0f;
-	delta_bias[outc] = 0.0f;
-	for(int i=0;i<width_image_C3_CNN * height_image_C3_CNN;i++){
-		out[outc * 100 + i] = 0.0f;
+	int block = 10 * 10 * outc; //C3
+	int index = (outc*5*5) + y*5 + x; //S4 当前神经元j
+	__local float w_tmp[5][5];
+	__local float b_tmp[5][5];
+	w_tmp[y][x] = 0;
+	// delta_weight[outc] = 0.0f;
+	// delta_bias[outc] = 0.0f;
+	// for(int i=0;i<10 * 10;i++){
+	// 	out[outc * 100 + i] = 0.0f;
+	// }
+	for (int m = 0; m < 2; m++) {
+		for (int n = 0; n < 2; n++) {
+			int addr2 = block + (y * 2 + m) * 10 + x * 2 + n; //C3 神经元 k
+			out[addr2] = in[index] * weight_S4[outc] * (1.0 - neuron_C3[addr2] * neuron_C3[addr2]) * scale_factor;
+			w_tmp[y][x] += in[index] * neuron_C3[addr2] * scale_factor;
+		}
 	}
-
-	for (int y=0; y<height_image_S4_CNN; y++) {
-		for (int x=0; x<width_image_S4_CNN; x++) {
-			int rows = y * width_kernel_pooling_CNN;
-			int cols = x * height_kernel_pooling_CNN;
-			int index = (outc*height_image_S4_CNN*width_image_S4_CNN) + y*width_image_S4_CNN + x; //S4 当前神经元j
-
-			for (int m = 0; m < height_kernel_pooling_CNN; m++) {
-				for (int n = 0; n < width_kernel_pooling_CNN; n++) {
-					int addr1 = outc;  // 权重
-					int addr2 = block + (rows + m) * width_image_C3_CNN + cols + n; //C3 神经元 k
-					int addr3 = outc;
-					out[addr2] += in[index] * weight_S4[addr1] * (1.0 - neuron_C3[addr2] * neuron_C3[addr2]) * scale_factor;
-					delta_weight[addr1] += in[index] * neuron_C3[addr2] * scale_factor;
-					delta_bias[addr3] += in[index];
-				}
+	b_tmp[y][x] = in[index]*4;
+	barrier(CLK_LOCAL_MEM_FENCE);
+	if(x == 0 && y == 0){
+		float tmpb=0,tmpw=0;
+		for(int yy = 0;yy < 5;yy++)
+			for(int xx = 0;xx < 5;xx++){
+				tmpb += b_tmp[yy][xx];
+				tmpw += w_tmp[yy][xx];
 			}
-		}//index
+		delta_weight[outc] = tmpw;
+		delta_bias[outc] = tmpb;
 	}
-
 }
 
 __kernel void  kernel_backward_s2(
@@ -593,6 +592,9 @@ __kernel void kernel_update_weights(
 	__global float * weight
 ){
 	int i = get_global_id(0);
-	e_weight[i] += delta[i] * delta[i];
-	weight[i] -= 0.01 * delta[i] / (sqrt(e_weight[i]) + 1e-8);
+	float delta_tmp = delta[i];
+	float e_weight_tmp = e_weight[i];
+	e_weight_tmp += delta_tmp * delta_tmp;
+	weight[i] -= 0.01 * delta_tmp / (sqrt(e_weight_tmp) + 1e-8);
+	e_weight[i] = e_weight_tmp;
 }
