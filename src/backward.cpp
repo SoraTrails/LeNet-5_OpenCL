@@ -252,10 +252,11 @@ bool CNN::Backward_input(int index)
 		printf("Unable to set kernel Backward_input arguments.\n");
 		return false;
 	}
-	// size_t local[3];
-	size_t global1[3] = {6,5,5};
+	size_t global[3] = {6,28,28};
+	// size_t global[3] = {6,5,5};
+	size_t local[3] = {1,28,28};
 
-	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_input_weight, 3, NULL, global1, NULL /*local*/, 0, NULL, NULL);
+	err = clEnqueueNDRangeKernel(command_queue, Backward_kernel_input_weight, 3, NULL, global, local /*local*/, 0, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
 		printf("Unable to enqueue kernel command Backward_input. Error Code=%d\n", err); 
