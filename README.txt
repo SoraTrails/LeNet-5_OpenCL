@@ -1,0 +1,6 @@
+代码说明：
+src下为源码目录，在src下make可在Release下生成可执行文件
+git cpu_naive分支为原始代码实现
+cpu_unroll分支为循环展开优化
+cpu_simd分支为SIMD代码实现
+cl分支为OpenCL代码优化实现
