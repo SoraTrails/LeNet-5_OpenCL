@@ -443,9 +443,6 @@ __kernel void  kernel_backward_c1(
 	int outc = get_global_id(0);
 	int y = get_global_id(1); 
 	int x = get_global_id(2); 
-	// printf("0:%d %d %d %d %d %d %d\n", outc, y, x, get_global_size(0), get_global_size(1), get_global_size(2),get_work_dim());
-
-	// printf("%d %d %d\n", outc, x, y);
 	const float scale_factor = 0.25f;
 	const int width_kernel_pooling_CNN = 2;
 	const int height_kernel_pooling_CNN = 2;
@@ -461,34 +458,13 @@ __kernel void  kernel_backward_c1(
 
 	for (int m = 0; m < 2; m++) {
 		for (int n = 0; n < 2; n++) {
-			int addr2 = block + (y * 2 + m) * 28 + x * 2 + n; //C1 神经元 k
+			int addr2 = block + (y * 2 + m) * 28 + x * 2 + n;
 			out[addr2] = in[index] * weight_S2[outc]
 			* (1-neuron_C1[addr2]*neuron_C1[addr2]) * scale_factor;
 			w_tmp[y][x]+=in[index] * neuron_C1[addr2] * scale_factor;
 		}
 	}
 	b_tmp[y][x] = in[index] * 4;
-	// barrier(CLK_LOCAL_MEM_FENCE);
-	// if(x < 7){
-	// 	b_tmp[y][x] += b_tmp[y][x+7];
-	// 	w_tmp[y][x] += w_tmp[y][x+7];
-	// }
-	// barrier(CLK_LOCAL_MEM_FENCE);
-	// if(y < 7 && x < 7){
-	// 	b_tmp[y][x] += b_tmp[y+7][x];
-	// 	w_tmp[y][x] += w_tmp[y+7][x];
-	// }
-
-	// barrier(CLK_LOCAL_MEM_FENCE);
-	// if(x > 0 && x < 4){
-	// 	b_tmp[y][x] += b_tmp[y][x+3];
-	// 	w_tmp[y][x] += w_tmp[y][x+3];
-	// }
-	// barrier(CLK_LOCAL_MEM_FENCE);
-	// if(y > 0 && y < 4 && x < 4){
-	// 	b_tmp[y][x] += b_tmp[y+3][x];
-	// 	w_tmp[y][x] += w_tmp[y+3][x];
-	// }
 	barrier(CLK_LOCAL_MEM_FENCE);
 	if(x == 0 && y == 0){
 		float tmpb=0,tmpw=0;
